@@ -6,10 +6,11 @@ interface Props {
   progress: Progress
   onLang: (l: Lang) => void
   onTranslit: (v: boolean) => void
+  onSound: (on: boolean) => void
   onStart: (lessonId: string) => void
 }
 
-export function Home({ progress, onLang, onTranslit, onStart }: Props) {
+export function Home({ progress, onLang, onTranslit, onSound, onStart }: Props) {
   const course = courses[progress.lang]
   const order = allLessons(course).map((l) => l.id)
   const firstOpen = order.find((id) => !(id in progress.completed))
@@ -27,6 +28,13 @@ export function Home({ progress, onLang, onTranslit, onStart }: Props) {
         <div className="scores">
           <span title="רצף ימים">🔥 {progress.streak}</span>
           <span title="נקודות ניסיון">⭐ {progress.xp}</span>
+          <button
+            className="icon-btn"
+            aria-label={progress.soundOn ? 'השתקת צלילים' : 'הפעלת צלילים'}
+            onClick={() => onSound(!progress.soundOn)}
+          >
+            {progress.soundOn ? '🔊' : '🔇'}
+          </button>
         </div>
       </header>
 
@@ -43,7 +51,7 @@ export function Home({ progress, onLang, onTranslit, onStart }: Props) {
             <span>{unit.emoji}</span> {unit.title}
           </h2>
           <div className="path">
-            {unitLessons(unit).map((lesson, i) => {
+            {unitLessons(course, unit).map((lesson, i) => {
               const done = lesson.id in progress.completed
               const current = lesson.id === firstOpen
               const locked = !done && !current

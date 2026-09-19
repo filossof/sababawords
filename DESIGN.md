@@ -34,9 +34,22 @@ src/components/  exercise UIs, lesson map, deck creator
 src/store/       progress + decks
 ```
 
+## Writing is introduced gradually
+English: unit 1 no writing, unit 2 letter tiles, unit 3+ typing. Arabic: units 1-3 no writing, then typing.
+Test-prep decks always include tiles/typing in the "Spell" level, and skip typing for words the on-screen keyboard can't produce.
+
+## Sounds
+All synthesized with the Web Audio API (`src/sound.ts`, no audio files): tap, key, correct chime, wrong buzz,
+match ding, lesson-complete fanfare, fail. Global button listener; mute toggle on the home screen.
+
+## Test-prep implementation
+`src/engine/parse.ts` (pasted text/CSV → words, Hebrew side auto-detected), `src/engine/testprep.ts`
+(levels + lessons + mock), `src/engine/mastery.ts` (Leitner boxes 0-3, review after 0/1/3/7 days),
+`src/store/decks.ts` (decks + per-deck progress in localStorage), `src/store/share.ts` (deck ↔ URL hash, deflate-compressed).
+
 ## Plan
 1. Scaffold + deploy hello world ✅
-2. Exercise components + lesson player
-3. Deck creator + level generator
-4. Map, XP/streaks, audio
-5. PWA polish, offline
+2. Exercise components + lesson player ✅
+3. Deck creator + level generator (test prep) ✅
+4. Map polish, avatars/profiles, leagues, more course content
+5. PWA polish (PNG icons), offline check

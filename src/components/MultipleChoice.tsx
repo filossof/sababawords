@@ -11,9 +11,11 @@ interface Props extends ExerciseProps {
   /** toHe: see target → pick Hebrew; toTarget: see Hebrew → pick target; listen: hear target → pick Hebrew */
   mode: 'toHe' | 'toTarget' | 'listen'
   audio: boolean
+  /** mock-test mode: no right/wrong colours, just remember the choice and move on */
+  blind?: boolean
 }
 
-export function MultipleChoice({ word, options, mode, audio, lang, showTranslit, onDone }: Props) {
+export function MultipleChoice({ word, options, mode, audio, blind, lang, showTranslit, onDone }: Props) {
   const [picked, setPicked] = useState<string | null>(null)
   const pickTarget = mode === 'toTarget'
 
@@ -24,7 +26,8 @@ export function MultipleChoice({ word, options, mode, audio, lang, showTranslit,
   function pick(id: string) {
     if (picked) return
     setPicked(id)
-    onDone(id === word.id)
+    if (blind) setTimeout(() => onDone(id === word.id), 350)
+    else onDone(id === word.id)
   }
 
   const langName = lang === 'en' ? 'באנגלית' : 'בערבית'
@@ -51,9 +54,9 @@ export function MultipleChoice({ word, options, mode, audio, lang, showTranslit,
       </div>
       <div className="options">
         {options.map((o) => {
-          const state = picked ? (o.id === word.id ? 'right' : o.id === picked ? 'wrong' : '') : ''
+          const state = blind ? (o.id === picked ? 'selected' : '') : picked ? (o.id === word.id ? 'right' : o.id === picked ? 'wrong' : '') : ''
           return (
-            <button key={o.id} className={`option ${state}`} disabled={!!picked} onClick={() => pick(o.id)}>
+            <button key={o.id} className={`option ${state}`} disabled={!!picked} data-silent={blind ? undefined : ''} onClick={() => pick(o.id)}>
               {pickTarget ? (
                 <>
                   <Txt lang={lang}>{o.target}</Txt>

@@ -22,12 +22,16 @@ export interface Course {
   units: Unit[]
 }
 
+/** How much the learner has to write: nothing, arrange letter tiles, or type the whole word. */
+export type Writing = 'none' | 'scramble' | 'type'
+
 export interface LessonDef {
   id: string
   title: string
   words: Word[]
   /** show flashcards introducing the words first */
   intro: boolean
+  writing: Writing
 }
 
 export type Exercise =
@@ -36,3 +40,4 @@ export type Exercise =
   | { kind: 'listen'; word: Word; options: Word[] }
   | { kind: 'match'; pairs: Word[] }
   | { kind: 'type'; word: Word }
+  | { kind: 'scramble'; word: Word }

@@ -1,4 +1,4 @@
-import type { Course, Lang, LessonDef, Unit, Word } from '../types'
+import type { Course, Lang, LessonDef, Unit, Word, Writing } from '../types'
 
 const en = (id: string, target: string, he: string): Word => ({ id: `en-${id}`, target, he })
 const ar = (id: string, target: string, he: string, translit: string): Word => ({
@@ -157,17 +157,27 @@ export const langInfo: Record<Lang, { he: string; native: string; flag: string; 
   ar: { he: 'ערבית', native: 'العربية', flag: '🇸🇦', dir: 'rtl' },
 }
 
+/**
+ * Writing is introduced gradually: the first units are recognition only, then letter tiles
+ * (English), and typing only later. Arabic typing is harder, so it comes last.
+ */
+function writingFor(lang: Lang, unitIndex: number): Writing {
+  if (lang === 'en') return unitIndex === 0 ? 'none' : unitIndex === 1 ? 'scramble' : 'type'
+  return unitIndex < 3 ? 'none' : 'type'
+}
+
 /** Each unit has 3 lessons: two intro lessons (3 words each) and a review of all its words. */
-export function unitLessons(unit: Unit): LessonDef[] {
+export function unitLessons(course: Course, unit: Unit): LessonDef[] {
+  const writing = writingFor(course.lang, course.units.indexOf(unit))
   return [
-    { id: `${unit.id}-a`, title: 'שיעור 1', words: unit.words.slice(0, 3), intro: true },
-    { id: `${unit.id}-b`, title: 'שיעור 2', words: unit.words.slice(3, 6), intro: true },
-    { id: `${unit.id}-c`, title: 'חזרה', words: unit.words, intro: false },
+    { id: `${unit.id}-a`, title: 'שיעור 1', words: unit.words.slice(0, 3), intro: true, writing },
+    { id: `${unit.id}-b`, title: 'שיעור 2', words: unit.words.slice(3, 6), intro: true, writing },
+    { id: `${unit.id}-c`, title: 'חזרה', words: unit.words, intro: false, writing },
   ]
 }
 
 export function allLessons(course: Course): LessonDef[] {
-  return course.units.flatMap(unitLessons)
+  return course.units.flatMap((u) => unitLessons(course, u))
 }
 
 export function allWords(course: Course): Word[] {

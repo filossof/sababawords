@@ -9,6 +9,7 @@ export interface Progress {
   /** lessonId -> best accuracy (0-100) */
   completed: Record<string, number>
   showTranslit: boolean
+  soundOn: boolean
 }
 
 const KEY = 'sababawords:v1'
@@ -20,6 +21,7 @@ const initial: Progress = {
   lastDay: null,
   completed: {},
   showTranslit: true,
+  soundOn: true,
 }
 
 const dayString = (d: Date) =>
@@ -52,22 +54,22 @@ export function useProgress() {
     [],
   )
 
-  const completeLesson = useCallback((lessonId: string, xp: number, accuracy: number) => {
+  const setSoundOn = useCallback((soundOn: boolean) => setProgress((p) => ({ ...p, soundOn })), [])
+
+  /** Adds XP and keeps the day streak going. */
+  const earnXp = useCallback((xp: number, lessonId?: string, accuracy = 0) => {
     setProgress((p) => {
       const now = new Date()
       const today = dayString(now)
       const yesterday = dayString(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1))
       let streak = p.streak
       if (p.lastDay !== today) streak = p.lastDay === yesterday ? p.streak + 1 : 1
-      return {
-        ...p,
-        xp: p.xp + xp,
-        streak,
-        lastDay: today,
-        completed: { ...p.completed, [lessonId]: Math.max(accuracy, p.completed[lessonId] ?? 0) },
-      }
+      const completed = lessonId
+        ? { ...p.completed, [lessonId]: Math.max(accuracy, p.completed[lessonId] ?? 0) }
+        : p.completed
+      return { ...p, xp: p.xp + xp, streak, lastDay: today, completed }
     })
   }, [])
 
-  return { progress, setLang, setShowTranslit, completeLesson }
+  return { progress, setLang, setShowTranslit, setSoundOn, earnXp }
 }

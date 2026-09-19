@@ -1,7 +1,7 @@
 import type { Lang } from '../types'
 
 const rows: Record<Lang, string[]> = {
-  en: ['qwertyuiop', 'asdfghjkl', "zxcvbnm'"],
+  en: ['qwertyuiop', 'asdfghjkl', "zxcvbnm'-"],
   ar: ['ضصثقفغعهخحجد', 'شسيبلاتنمكط', 'ئءؤرىةوزظ', 'أإآذ'],
 }
 

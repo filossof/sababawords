@@ -1,4 +1,5 @@
-import type { Exercise, Word } from '../types'
+import type { Exercise, Word, Writing } from '../types'
+import { canScramble } from './check'
 
 export type Rng = () => number
 
@@ -7,6 +8,8 @@ export interface GenOptions {
   audio: boolean
   /** start with flashcards that introduce the words */
   intro: boolean
+  /** how much the learner has to write in this lesson */
+  writing: Writing
   rng?: Rng
 }
 
@@ -36,7 +39,7 @@ export function pickOptions(word: Word, pool: Word[], count: number, rng: Rng): 
 
 /**
  * Builds a lesson: intro flashcards → multiple choice (both directions) → matching
- * → listening → typing. `pool` supplies distractors (the whole course).
+ * → listening → (optional) letter tiles or typing. `pool` supplies distractors (the whole course).
  */
 export function generateLesson(words: Word[], pool: Word[], opts: GenOptions): Exercise[] {
   const rng = opts.rng ?? Math.random
@@ -61,7 +64,11 @@ export function generateLesson(words: Word[], pool: Word[], opts: GenOptions): E
     }
   }
 
-  for (const word of shuffle(words, rng)) out.push({ kind: 'type', word })
+  if (opts.writing === 'type') {
+    for (const word of shuffle(words, rng)) out.push({ kind: 'type', word })
+  } else if (opts.writing === 'scramble') {
+    for (const word of shuffle(words, rng)) if (canScramble(word.target)) out.push({ kind: 'scramble', word })
+  }
 
   return out
 }
@@ -74,6 +81,7 @@ export function answerOf(ex: Exercise): { text: string; lang: 'he' | 'target' } 
     case 'listen':
       return { text: ex.word.he, lang: 'he' }
     case 'type':
+    case 'scramble':
       return { text: ex.word.target, lang: 'target' }
     default:
       return null

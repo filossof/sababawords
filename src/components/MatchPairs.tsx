@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { shuffle } from '../engine/generate'
+import { sfx } from '../sound'
 import type { Word } from '../types'
 import type { ExerciseProps } from './exerciseProps'
 import { Txt } from './Txt'
@@ -15,12 +16,14 @@ export function MatchPairs({ pairs, lang, onDone }: ExerciseProps & { pairs: Wor
 
   function attempt(t: string, h: string) {
     if (t === h) {
+      sfx.match()
       const next = new Set(matched).add(t)
       setMatched(next)
       setSelT(null)
       setSelH(null)
       if (next.size === pairs.length) setTimeout(() => onDone(!mistakes), 500)
     } else {
+      sfx.wrong()
       setMistakes(true)
       setFlash(true)
       setTimeout(() => {

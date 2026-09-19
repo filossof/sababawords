@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useVoice } from '../audio'
 import { answerOf } from '../engine/generate'
+import { sfx } from '../sound'
 import type { Exercise, Lang } from '../types'
 import { Flashcard } from './Flashcard'
 import { MatchPairs } from './MatchPairs'
 import { MultipleChoice } from './MultipleChoice'
+import { ScrambleWord } from './ScrambleWord'
 import { TypeAnswer } from './TypeAnswer'
 import { Txt } from './Txt'
 
@@ -16,7 +18,8 @@ interface Props {
   showTranslit: boolean
   onExit: () => void
   onRetry: () => void
-  onComplete: (xp: number, accuracy: number) => void
+  /** `missed` = ids of words the learner got wrong at least once */
+  onComplete: (xp: number, accuracy: number, missed: string[]) => void
 }
 
 export function LessonPlayer({ lang, exercises, showTranslit, onExit, onRetry, onComplete }: Props) {
@@ -25,6 +28,7 @@ export function LessonPlayer({ lang, exercises, showTranslit, onExit, onRetry, o
   const [idx, setIdx] = useState(0)
   const [hearts, setHearts] = useState(MAX_HEARTS)
   const [mistakes, setMistakes] = useState(0)
+  const [missed, setMissed] = useState<Set<string>>(new Set())
   const [feedback, setFeedback] = useState<{ correct: boolean } | null>(null)
   const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing')
 
@@ -44,11 +48,16 @@ export function LessonPlayer({ lang, exercises, showTranslit, onExit, onRetry, o
       nextHearts = hearts - 1
       setHearts(nextHearts)
       setMistakes((m) => m + 1)
+      if ('word' in ex) setMissed((m) => new Set(m).add(ex.word.id))
       // missed words come back at the end until answered correctly
       if (ex.kind !== 'match') setQueue((q) => [...q, ex])
     }
     if (ex.kind === 'flashcard' || ex.kind === 'match') advance(nextHearts)
-    else setFeedback({ correct })
+    else {
+      if (correct) sfx.correct()
+      else sfx.wrong()
+      setFeedback({ correct })
+    }
   }
 
   // Enter = continue, once feedback is showing
@@ -63,6 +72,11 @@ export function LessonPlayer({ lang, exercises, showTranslit, onExit, onRetry, o
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [feedback])
+
+  useEffect(() => {
+    if (status === 'won') sfx.complete()
+    else if (status === 'lost') sfx.fail()
+  }, [status])
 
   if (status !== 'playing') {
     const accuracy = Math.max(0, Math.round((100 * (scored - mistakes)) / Math.max(scored, 1)))
@@ -80,7 +94,7 @@ export function LessonPlayer({ lang, exercises, showTranslit, onExit, onRetry, o
           <p>לא נורא, נסו שוב – זה מה שמלמד.</p>
         )}
         {status === 'won' ? (
-          <button className="btn btn-primary" onClick={() => onComplete(xp, accuracy)}>
+          <button className="btn btn-primary" onClick={() => onComplete(xp, accuracy, [...missed])}>
             המשך
           </button>
         ) : (
@@ -123,6 +137,7 @@ export function LessonPlayer({ lang, exercises, showTranslit, onExit, onRetry, o
         {ex.kind === 'mc' && <MultipleChoice {...props} word={ex.word} options={ex.options} mode={ex.dir} audio={audio} />}
         {ex.kind === 'listen' && <MultipleChoice {...props} word={ex.word} options={ex.options} mode="listen" audio={audio} />}
         {ex.kind === 'match' && <MatchPairs {...props} pairs={ex.pairs} />}
+        {ex.kind === 'scramble' && <ScrambleWord {...props} word={ex.word} />}
         {ex.kind === 'type' && <TypeAnswer {...props} word={ex.word} />}
       </main>
 
