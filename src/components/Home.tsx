@@ -38,6 +38,8 @@ export function Home({ progress, onLang, onTranslit, onSound, onStart }: Props) 
         </div>
       </header>
 
+      {progress.soundOn && <div className="muted sound-hint">אין צליל? בדקו שהטלפון לא במצב שקט ושעוצמת השמע פתוחה.</div>}
+
       {progress.lang === 'ar' && (
         <label className="toggle">
           <input type="checkbox" checked={progress.showTranslit} onChange={(e) => onTranslit(e.target.checked)} />

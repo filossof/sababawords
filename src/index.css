@@ -158,3 +158,20 @@ button:disabled { cursor: default; }
 .slots .tile { border-color: var(--blue); background: #e6f6ff; }
 
 .link-box { width: 100%; margin-top: 0.5rem; padding: 0.6rem; border: 2px solid var(--line); border-radius: 12px; font: inherit; font-size: 0.8rem; }
+
+/* translation review */
+.step-badge { margin-inline-start: auto; font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+.hint { font-size: 0.9rem; margin: 0; }
+.review { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.review li { border: 2px solid var(--line); border-radius: 14px; padding: 0.6rem 0.7rem; }
+.review li.bad { border-color: var(--red); background: #fff6f6; }
+.review-row { display: flex; align-items: center; gap: 0.5rem; }
+.review-word { flex: 0 0 34%; font-weight: 800; font-size: 1.05rem; overflow-wrap: anywhere; }
+.review-input { flex: 1; min-width: 0; font: inherit; font-size: 1.05rem; border: 2px solid var(--line); border-radius: 10px; padding: 0.45rem 0.6rem; background: #fff; color: var(--ink); }
+.review-input:focus { outline: none; border-color: var(--blue); }
+.review-note { color: var(--red-dark); font-size: 0.85rem; margin-top: 0.3rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.chip { border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.95rem; }
+.chip:active { background: var(--green-soft); border-color: var(--green); }
+
+.sound-hint { font-size: 0.8rem; margin-bottom: 0.25rem; }

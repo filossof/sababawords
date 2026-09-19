@@ -65,3 +65,60 @@ export function parseVocab(text: string, lang: Lang): ParseResult {
 
   return { words, skipped }
 }
+
+export interface WordItem {
+  id: string
+  target: string
+  /** Hebrew meaning when the user typed one (`word - translation`); otherwise it gets translated */
+  he?: string
+}
+
+export interface WordListResult {
+  items: WordItem[]
+  skipped: SkippedLine[]
+}
+
+const LIST_MARKER = /^\s*(?:[•*·]|-(?=\s)|\d+[.)])\s*/
+
+/**
+ * Parses what the user pastes for a test: normally just English words or phrases – one per line,
+ * or separated by commas. A line that also contains Hebrew (`word - translation`) keeps that translation.
+ */
+export function parseWordList(text: string, lang: Lang): WordListResult {
+  const items: WordItem[] = []
+  const skipped: SkippedLine[] = []
+  const seen = new Set<string>()
+
+  const add = (target: string, he: string | undefined, line: number, raw: string) => {
+    const skip = (reason: string) => skipped.push({ line, text: raw, reason })
+    if (lang === 'en' && !/[a-z]/i.test(target)) return skip('המילה אינה באנגלית')
+    if (lang === 'ar' && !ARABIC.test(target)) return skip('המילה אינה בערבית')
+    if (HEBREW.test(target)) return skip('המילה צריכה להיות באנגלית')
+    const id = wordId(target, lang)
+    if (seen.has(id)) return skip('מילה כפולה')
+    seen.add(id)
+    items.push({ id, target, he })
+  }
+
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.replace(LIST_MARKER, '').trim()
+    if (!line) return
+
+    if (HEBREW.test(line)) {
+      const pair = parseVocab(line, lang)
+      if (pair.words.length) add(pair.words[0].target, pair.words[0].he, i + 1, raw.trim())
+      else skipped.push({ line: i + 1, text: raw.trim(), reason: pair.skipped[0]?.reason ?? 'שורה לא מובנת' })
+      return
+    }
+    if (lang === 'ar') {
+      skipped.push({ line: i + 1, text: raw.trim(), reason: 'חסר תרגום בעברית' })
+      return
+    }
+    for (const piece of line.split(/[,;\t]/)) {
+      const target = clean(piece)
+      if (target) add(target, undefined, i + 1, target)
+    }
+  })
+
+  return { items, skipped }
+}

@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
-import { langInfo } from '../data/courses'
-import { parseVocab } from '../engine/parse'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { parseWordList, wordId } from '../engine/parse'
+import { runPool, translate } from '../engine/translate'
 import { newDeckId, type Deck } from '../store/decks'
 import type { Lang } from '../types'
 import { Txt } from './Txt'
 
 const MIN_WORDS = 4
 
-const EXAMPLE: Record<Lang, string> = {
-  en: 'apple - תפוח\nto run - לרוץ\nbeautiful - יפה',
-  ar: 'تفاحة - תפוח\nيجري - לרוץ\nجميل - יפה',
+interface Entry {
+  he: string
+  alts: string[]
+  status: 'loading' | 'ok' | 'failed'
 }
 
 interface Props {
@@ -19,13 +20,49 @@ interface Props {
 }
 
 export function DeckEditor({ existing, onSave, onCancel }: Props) {
+  // tests are English; an older Arabic deck keeps its language and is edited as `word - translation` pairs
+  const lang: Lang = existing?.lang ?? 'en'
+  const [step, setStep] = useState<'words' | 'review'>('words')
   const [name, setName] = useState(existing?.name ?? '')
-  const [lang, setLang] = useState<Lang>(existing?.lang ?? 'en')
   const [testDate, setTestDate] = useState(existing?.testDate ?? '')
-  const [text, setText] = useState(existing ? existing.words.map((w) => `${w.target} - ${w.he}`).join('\n') : '')
+  const [text, setText] = useState(
+    existing ? existing.words.map((w) => (lang === 'en' ? w.target : `${w.target} - ${w.he}`)).join('\n') : '',
+  )
+  const [entries, setEntries] = useState<Record<string, Entry>>(() =>
+    Object.fromEntries((existing?.words ?? []).map((w) => [w.id, { he: w.he, alts: [], status: 'ok' as const }])),
+  )
+  const inflight = useRef(new Set<string>())
 
-  const { words, skipped } = useMemo(() => parseVocab(text, lang), [text, lang])
-  const canSave = name.trim().length > 0 && words.length >= MIN_WORDS
+  const { items, skipped } = useMemo(() => parseWordList(text, lang), [text, lang])
+
+  // typed `word - translation` pairs count as already translated
+  const known = (id: string): Entry | undefined => {
+    const item = items.find((i) => i.id === id)
+    return entries[id] ?? (item?.he ? { he: item.he, alts: [], status: 'ok' } : undefined)
+  }
+
+  function fetchOne(id: string, target: string) {
+    if (inflight.current.has(id)) return Promise.resolve()
+    inflight.current.add(id)
+    setEntries((e) => ({ ...e, [id]: { he: '', alts: [], status: 'loading' } }))
+    return translate(target).then((r) => {
+      inflight.current.delete(id)
+      setEntries((e) => ({
+        ...e,
+        [id]: r ? { he: r.he, alts: r.alts, status: 'ok' } : { he: '', alts: [], status: 'failed' },
+      }))
+    })
+  }
+
+  useEffect(() => {
+    if (step !== 'review') return
+    const todo = items.filter((i) => !i.he && !entries[i.id] && !inflight.current.has(i.id))
+    if (todo.length) void runPool(todo, 3, (i) => fetchOne(i.id, i.target))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
+  const setHe = (id: string, he: string) =>
+    setEntries((e) => ({ ...e, [id]: { alts: e[id]?.alts ?? [], he, status: 'ok' } }))
 
   async function importFile(file: File | undefined) {
     if (!file) return
@@ -33,96 +70,139 @@ export function DeckEditor({ existing, onSave, onCancel }: Props) {
     setText((t) => (t.trim() ? t.replace(/\s*$/, '\n') : '') + content.replace(/^﻿/, ''))
   }
 
+  const rows = items.map((i) => ({ item: i, entry: known(i.id) }))
+  const loading = rows.some((r) => r.entry?.status === 'loading' || !r.entry)
+  const missing = rows.filter((r) => !r.entry?.he.trim()).length
+  const canContinue = name.trim().length > 0 && items.length >= MIN_WORDS
+  const canSave = canContinue && !loading && missing === 0
+
   function save() {
     onSave({
       id: existing?.id ?? newDeckId(),
       name: name.trim(),
       lang,
       testDate: testDate || undefined,
-      words,
+      words: rows.map(({ item, entry }) => ({ id: wordId(item.target, lang), target: item.target, he: entry!.he.trim() })),
     })
   }
 
   return (
     <div className="screen editor">
       <header className="editor-top">
-        <button className="icon-btn" aria-label="חזרה" onClick={onCancel}>
-          ✕
+        <button className="icon-btn" aria-label="חזרה" onClick={step === 'review' ? () => setStep('words') : onCancel}>
+          {step === 'review' ? '→' : '✕'}
         </button>
         <h1 className="page-title">{existing ? 'עריכת מבחן' : 'מבחן חדש'}</h1>
+        <span className="step-badge">{step === 'words' ? 'שלב 1 מתוך 2' : 'שלב 2 מתוך 2'}</span>
       </header>
 
-      <label className="field">
-        <span>שם המבחן</span>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: אנגלית – יחידה 5" maxLength={60} />
-      </label>
+      {step === 'words' ? (
+        <>
+          <label className="field">
+            <span>שם המבחן</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: אנגלית – יחידה 5" maxLength={60} />
+          </label>
 
-      <div className="field">
-        <span>שפה</span>
-        <div className="langs">
-          {(Object.keys(langInfo) as Lang[]).map((l) => (
-            <button key={l} type="button" className={`pill ${l === lang ? 'active' : ''}`} onClick={() => setLang(l)}>
-              {langInfo[l].flag} {langInfo[l].he}
-            </button>
-          ))}
-        </div>
-      </div>
+          <label className="field">
+            <span>תאריך המבחן (לא חובה)</span>
+            <input type="date" value={testDate} onChange={(e) => setTestDate(e.target.value)} />
+          </label>
 
-      <label className="field">
-        <span>תאריך המבחן (לא חובה)</span>
-        <input type="date" value={testDate} onChange={(e) => setTestDate(e.target.value)} />
-      </label>
+          <label className="field">
+            <span>{lang === 'en' ? 'המילים באנגלית – מילה או ביטוי בכל שורה' : 'רשימת המילים – מילה - תרגום'}</span>
+            <textarea
+              rows={10}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={'apple\nto run\nbeautiful\nhouse'}
+              dir="ltr"
+              lang="en"
+              spellCheck={false}
+              autoCapitalize="off"
+            />
+          </label>
+          <div className="muted hint">התרגום לעברית נעשה אוטומטית בשלב הבא, ואפשר לתקן אותו.</div>
 
-      <label className="field">
-        <span>רשימת המילים – מילה בכל שורה: מילה - תרגום</span>
-        <textarea
-          rows={9}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={EXAMPLE[lang]}
-          dir="auto"
-          spellCheck={false}
-        />
-      </label>
+          <label className="file-btn">
+            📂 ייבוא מקובץ CSV / טקסט
+            <input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={(e) => void importFile(e.target.files?.[0])} hidden />
+          </label>
 
-      <label className="file-btn">
-        📂 ייבוא מקובץ CSV / טקסט
-        <input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={(e) => void importFile(e.target.files?.[0])} hidden />
-      </label>
+          <div className={`parse-summary ${items.length >= MIN_WORDS ? 'ok' : ''}`}>
+            {items.length > 0 ? `✓ זוהו ${items.length} מילים` : 'עדיין לא זוהו מילים'}
+            {items.length > 0 && items.length < MIN_WORDS && ` – צריך לפחות ${MIN_WORDS}`}
+          </div>
 
-      <div className={`parse-summary ${words.length >= MIN_WORDS ? 'ok' : ''}`}>
-        {words.length > 0 ? `✓ זוהו ${words.length} מילים` : 'עדיין לא זוהו מילים'}
-        {words.length > 0 && words.length < MIN_WORDS && ` – צריך לפחות ${MIN_WORDS}`}
-      </div>
+          {skipped.length > 0 && (
+            <div className="skipped">
+              <strong>⚠ {skipped.length} שורות דולגו:</strong>
+              <ul>
+                {skipped.slice(0, 5).map((s) => (
+                  <li key={`${s.line}-${s.text}`}>
+                    <bdi>{s.text}</bdi> – {s.reason}
+                  </li>
+                ))}
+                {skipped.length > 5 && <li>ועוד {skipped.length - 5}…</li>}
+              </ul>
+            </div>
+          )}
 
-      {words.length > 0 && (
-        <ul className="preview">
-          {words.slice(0, 6).map((w) => (
-            <li key={w.id}>
-              <Txt lang={lang}>{w.target}</Txt> <span>←</span> <Txt lang="he">{w.he}</Txt>
-            </li>
-          ))}
-          {words.length > 6 && <li className="muted">ועוד {words.length - 6}…</li>}
-        </ul>
-      )}
+          <button className="btn btn-primary" disabled={!canContinue} onClick={() => setStep('review')}>
+            {lang === 'en' ? 'תרגום המילים ←' : 'המשך ←'}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="muted hint">
+            {loading ? 'מתרגם…' : 'בדקו את התרגומים. תרגום אוטומטי לא תמיד מדויק – אפשר להקליד תרגום אחר או ללחוץ על אחת האפשרויות.'}
+          </p>
 
-      {skipped.length > 0 && (
-        <div className="skipped">
-          <strong>⚠ {skipped.length} שורות דולגו:</strong>
-          <ul>
-            {skipped.slice(0, 5).map((s) => (
-              <li key={s.line}>
-                שורה {s.line}: <bdi>{s.text}</bdi> – {s.reason}
-              </li>
-            ))}
-            {skipped.length > 5 && <li>ועוד {skipped.length - 5}…</li>}
+          <ul className="review">
+            {rows.map(({ item, entry }) => {
+              const e = entry ?? { he: '', alts: [], status: 'loading' as const }
+              return (
+                <li key={item.id} className={e.status === 'failed' || (e.status === 'ok' && !e.he.trim()) ? 'bad' : ''}>
+                  <div className="review-row">
+                    <Txt lang={lang} className="review-word">
+                      {item.target}
+                    </Txt>
+                    <input
+                      className="review-input"
+                      dir="rtl"
+                      lang="he"
+                      value={e.status === 'loading' ? '' : e.he}
+                      placeholder={e.status === 'loading' ? 'מתרגם…' : 'כתבו תרגום'}
+                      disabled={e.status === 'loading'}
+                      onChange={(ev) => setHe(item.id, ev.target.value)}
+                      aria-label={`תרגום של ${item.target}`}
+                    />
+                    <button className="icon-btn" aria-label="תרגום מחדש" title="תרגום מחדש" onClick={() => void fetchOne(item.id, item.target)}>
+                      ↻
+                    </button>
+                  </div>
+                  {e.status === 'failed' && <div className="review-note">לא הצלחנו לתרגם – כתבו ידנית או נסו שוב.</div>}
+                  {e.alts.length > 0 && (
+                    <div className="chips">
+                      {e.alts
+                        .filter((a) => a !== e.he)
+                        .map((a) => (
+                          <button key={a} className="chip" onClick={() => setHe(item.id, a)}>
+                            {a}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
-        </div>
-      )}
 
-      <button className="btn btn-primary" disabled={!canSave} onClick={save}>
-        {existing ? 'שמירה' : 'יצירת שלבים'}
-      </button>
+          {missing > 0 && !loading && <div className="parse-summary">חסר תרגום ב-{missing} מילים</div>}
+          <button className="btn btn-primary" disabled={!canSave} onClick={save}>
+            {existing ? 'שמירה' : 'יצירת שלבים'}
+          </button>
+        </>
+      )}
     </div>
   )
 }

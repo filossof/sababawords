@@ -15,7 +15,7 @@ export function DeckList({ decks, progress, onOpen, onNew }: Props) {
     <div className="screen">
       <h1 className="page-title">🎯 הכנה למבחן</h1>
       <p className="muted">
-        הזינו שפה ורשימת מילים למבחן – והמשחק יבנה שלבים שמכינים אתכם צעד אחר צעד.
+        הקלידו את המילים באנגלית שיהיו במבחן – המשחק יתרגם אותן ויבנה שלבים שמכינים אתכם צעד אחר צעד.
       </p>
 
       {decks.map((deck) => {

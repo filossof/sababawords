@@ -11,7 +11,7 @@ import { allLessons, allWords, courses, langInfo } from './data/courses'
 import { generateLesson } from './engine/generate'
 import { generateMock, generatePrepLesson, type PrepLesson } from './engine/testprep'
 import type { PlaySession } from './session'
-import { installClickSounds, setSoundEnabled } from './sound'
+import { installClickSounds, setSoundEnabled, sfx } from './sound'
 import { deckFromShared, useDecks, type Deck } from './store/decks'
 import { HASH_PREFIX, decodeDeck } from './store/share'
 import { useProgress } from './store/progress'
@@ -152,7 +152,11 @@ export default function App() {
   switch (view.name) {
     case 'learn':
       return withTabs(
-        <Home progress={progress} onLang={setLang} onTranslit={setShowTranslit} onSound={setSoundOn} onStart={startLesson} />,
+        <Home progress={progress} onLang={setLang} onTranslit={setShowTranslit} onSound={(on) => {
+          setSoundOn(on)
+          setSoundEnabled(on)
+          if (on) sfx.correct() // audible confirmation that sound works
+        }} onStart={startLesson} />,
       )
 
     case 'decks':
