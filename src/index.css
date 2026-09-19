@@ -1,0 +1,14 @@
+:root {
+  --green: #58cc02;
+  --green-dark: #46a302;
+  --ink: #3c3c3c;
+  --bg: #ffffff;
+  font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; }
+#root { min-height: 100dvh; display: flex; flex-direction: column; }
+.hello { margin: auto; text-align: center; padding: 1rem; }
+.hello h1 { color: var(--green-dark); margin: 0.5rem 0; }
