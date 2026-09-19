@@ -18,7 +18,7 @@ interface Props {
 }
 
 export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onStartLesson, onPractice, onMock }: Props) {
-  const levels = useMemo(() => buildLevels(deck.words), [deck.words])
+  const levels = useMemo(() => buildLevels(deck.words, deck.lang), [deck.words, deck.lang])
   const ids = useMemo(() => deck.words.map((w) => w.id), [deck.words])
   const weak = weakWordIds(ids, progress.stats)
   const mastered = masteredCount(ids, progress.stats)

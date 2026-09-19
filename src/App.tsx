@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useVoice } from './audio'
+import { setVoicePreferences, useVoice } from './audio'
 import { DeckEditor } from './components/DeckEditor'
 import { DeckHome } from './components/DeckHome'
 import { DeckList } from './components/DeckList'
@@ -7,8 +7,8 @@ import { Home } from './components/Home'
 import { LessonPlayer } from './components/LessonPlayer'
 import { MockTest } from './components/MockTest'
 import { TabBar, type Tab } from './components/TabBar'
-import { allLessons, allWords, courses, langInfo } from './data/courses'
-import { generateLesson } from './engine/generate'
+import { allLessons, courses, langInfo } from './data/courses'
+import { generateLevel } from './engine/level'
 import { generateMock, generatePrepLesson, type PrepLesson } from './engine/testprep'
 import type { PlaySession } from './session'
 import { installClickSounds, setSoundEnabled, sfx } from './sound'
@@ -16,6 +16,8 @@ import { deckFromShared, useDecks, type Deck } from './store/decks'
 import { HASH_PREFIX, decodeDeck } from './store/share'
 import { useProgress } from './store/progress'
 import type { Exercise } from './types'
+
+const PREP_THEME = { color: '#1cb0f6', emoji: '🎯' }
 
 type View =
   | { name: 'learn' }
@@ -25,7 +27,7 @@ type View =
   | { name: 'mock'; deckId: string; questions: Exercise[] }
 
 export default function App() {
-  const { progress, setLang, setShowTranslit, setSoundOn, earnXp } = useProgress()
+  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp } = useProgress()
   const store = useDecks()
   const [view, setView] = useState<View>({ name: 'learn' })
   const [session, setSession] = useState<{ def: PlaySession; exercises: Exercise[]; attempt: number } | null>(null)
@@ -34,6 +36,7 @@ export default function App() {
 
   useEffect(installClickSounds, [])
   useEffect(() => setSoundEnabled(progress.soundOn), [progress.soundOn])
+  useEffect(() => setVoicePreferences(progress.voices), [progress.voices])
 
   // a shared deck arrives as a link like …/sababawords/#deck=<code>
   useEffect(() => {
@@ -53,7 +56,8 @@ export default function App() {
     if (!lesson) return
     play({
       lang: progress.lang,
-      make: () => generateLesson(lesson.words, allWords(course), { audio, intro: lesson.intro, writing: lesson.writing }),
+      theme: { color: lesson.unit.color, emoji: lesson.unit.emoji },
+      make: () => generateLevel(lesson, { lang: progress.lang, audio }),
       onComplete: (xp, accuracy) => earnXp(xp, lesson.id, accuracy),
     })
   }
@@ -77,7 +81,7 @@ export default function App() {
 
   function practiceWords(deck: Deck, wordIds: string[]) {
     const words = wordIds
-      .slice(0, 8)
+      .slice(0, 4)
       .map((id) => deck.words.find((w) => w.id === id))
       .filter((w) => w !== undefined)
     play({
@@ -93,6 +97,7 @@ export default function App() {
       <LessonPlayer
         key={session.attempt}
         lang={session.def.lang}
+        theme={session.def.theme ?? PREP_THEME}
         exercises={session.exercises}
         showTranslit={progress.showTranslit}
         onExit={() => setSession(null)}
@@ -152,7 +157,7 @@ export default function App() {
   switch (view.name) {
     case 'learn':
       return withTabs(
-        <Home progress={progress} onLang={setLang} onTranslit={setShowTranslit} onSound={(on) => {
+        <Home progress={progress} onLang={setLang} onTranslit={setShowTranslit} onVoice={setVoice} onSound={(on) => {
           setSoundOn(on)
           setSoundEnabled(on)
           if (on) sfx.correct() // audible confirmation that sound works

@@ -40,19 +40,22 @@ export function MultipleChoice({ word, options, mode, audio, blind, lang, showTr
         {mode === 'listen' && <Speaker text={word.target} lang={lang} big />}
         {mode === 'toHe' && (
           <>
-            <Txt lang={lang} className="big-word">
+            <Txt lang={lang} className={word.sentence ? 'sentence' : 'big-word'}>
               {word.target}
             </Txt>
             {audio && <Speaker text={word.target} lang={lang} />}
           </>
         )}
         {pickTarget && (
-          <Txt lang="he" className="big-word">
-            {word.he}
-          </Txt>
+          <div className="prompt-stack">
+            {word.pic && <div className="prompt-pic">{word.pic}</div>}
+            <Txt lang="he" className={word.sentence ? 'sentence' : 'big-word'}>
+              {word.he}
+            </Txt>
+          </div>
         )}
       </div>
-      <div className="options">
+      <div className={`options ${word.sentence ? 'long' : ''}`}>
         {options.map((o) => {
           const state = blind ? (o.id === picked ? 'selected' : '') : picked ? (o.id === word.id ? 'right' : o.id === picked ? 'wrong' : '') : ''
           return (

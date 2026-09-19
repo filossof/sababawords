@@ -6,12 +6,17 @@ import { Txt } from './Txt'
 export function Flashcard({ word, lang, showTranslit, audio, onDone }: ExerciseProps & { word: Word; audio: boolean }) {
   return (
     <div className="exercise">
-      <h2 className="title">מילה חדשה</h2>
-      <div className="card">
-        <Txt lang={lang} className="big-word">
+      <h2 className="title">{word.sentence ? 'משפט חדש' : 'מילה חדשה'}</h2>
+      <div className="card flash-card">
+        {word.pic && <div className="card-pic">{word.pic}</div>}
+        <Txt lang={lang} className={word.sentence ? 'card-sentence' : 'big-word'}>
           {word.target}
         </Txt>
-        {lang === 'ar' && showTranslit && word.translit && <Txt lang="he" className="translit">{word.translit}</Txt>}
+        {lang === 'ar' && showTranslit && word.translit && (
+          <Txt lang="he" className="translit">
+            {word.translit}
+          </Txt>
+        )}
         {audio && <Speaker text={word.target} lang={lang} big />}
         <Txt lang="he" className="meaning">
           {word.he}

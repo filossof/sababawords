@@ -29,3 +29,10 @@ export function canType(target: string, lang: Lang): boolean {
 export function canScramble(target: string): boolean {
   return /^[a-z]{3,12}$/i.test(target.trim())
 }
+
+/** Sentences match ignoring case, punctuation (incl. Arabic ؟ ،) and extra spaces. */
+export function sameSentence(a: string, b: string, lang: Lang | 'he'): boolean {
+  const strip = (t: string) =>
+    (lang === 'he' ? t : normalize(t, lang)).replace(/[.,!?؟،:;"]/g, '').replace(/\s+/g, ' ').trim()
+  return strip(a) === strip(b)
+}

@@ -10,6 +10,8 @@ export interface Progress {
   completed: Record<string, number>
   showTranslit: boolean
   soundOn: boolean
+  /** chosen text-to-speech voice per language (by name); missing = automatic */
+  voices: Partial<Record<Lang, string>>
 }
 
 const KEY = 'sababawords:v1'
@@ -22,6 +24,7 @@ const initial: Progress = {
   completed: {},
   showTranslit: true,
   soundOn: true,
+  voices: {},
 }
 
 const dayString = (d: Date) =>
@@ -54,6 +57,12 @@ export function useProgress() {
     [],
   )
 
+  const setVoice = useCallback(
+    (lang: Lang, name: string) =>
+      setProgress((p) => ({ ...p, voices: { ...p.voices, [lang]: name || undefined } })),
+    [],
+  )
+
   const setSoundOn = useCallback((soundOn: boolean) => setProgress((p) => ({ ...p, soundOn })), [])
 
   /** Adds XP and keeps the day streak going. */
@@ -71,5 +80,5 @@ export function useProgress() {
     })
   }, [])
 
-  return { progress, setLang, setShowTranslit, setSoundOn, earnXp }
+  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp }
 }
