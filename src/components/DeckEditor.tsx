@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { langInfo } from '../data/courses'
 import { parseWordList, wordId } from '../engine/parse'
 import { runPool, translate } from '../engine/translate'
 import { newDeckId, type Deck } from '../store/decks'
@@ -20,13 +21,13 @@ interface Props {
 }
 
 export function DeckEditor({ existing, onSave, onCancel }: Props) {
-  // tests are English; an older Arabic deck keeps its language and is edited as `word - translation` pairs
-  const lang: Lang = existing?.lang ?? 'en'
+  // the language of an existing test can't change (its words belong to it)
+  const [lang, setLang] = useState<Lang>(existing?.lang ?? 'en')
   const [step, setStep] = useState<'words' | 'review'>('words')
   const [name, setName] = useState(existing?.name ?? '')
   const [testDate, setTestDate] = useState(existing?.testDate ?? '')
   const [text, setText] = useState(
-    existing ? existing.words.map((w) => (lang === 'en' ? w.target : `${w.target} - ${w.he}`)).join('\n') : '',
+    existing ? existing.words.map((w) => w.target).join('\n') : '',
   )
   const [entries, setEntries] = useState<Record<string, Entry>>(() =>
     Object.fromEntries((existing?.words ?? []).map((w) => [w.id, { he: w.he, alts: [], status: 'ok' as const }])),
@@ -45,7 +46,7 @@ export function DeckEditor({ existing, onSave, onCancel }: Props) {
     if (inflight.current.has(id)) return Promise.resolve()
     inflight.current.add(id)
     setEntries((e) => ({ ...e, [id]: { he: '', alts: [], status: 'loading' } }))
-    return translate(target).then((r) => {
+    return translate(target, lang).then((r) => {
       inflight.current.delete(id)
       setEntries((e) => ({
         ...e,
@@ -103,25 +104,42 @@ export function DeckEditor({ existing, onSave, onCancel }: Props) {
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: אנגלית – יחידה 5" maxLength={60} />
           </label>
 
+          <div className="field">
+            <span>שפת המבחן</span>
+            <div className="langs">
+              {(Object.keys(langInfo) as Lang[]).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  className={`pill ${l === lang ? 'active' : ''}`}
+                  disabled={!!existing && l !== lang}
+                  onClick={() => setLang(l)}
+                >
+                  {langInfo[l].flag} {langInfo[l].he}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="field">
             <span>תאריך המבחן (לא חובה)</span>
             <input type="date" value={testDate} onChange={(e) => setTestDate(e.target.value)} />
           </label>
 
           <label className="field">
-            <span>{lang === 'en' ? 'המילים באנגלית – מילה או ביטוי בכל שורה' : 'רשימת המילים – מילה - תרגום'}</span>
+            <span>{lang === 'en' ? 'המילים באנגלית' : 'המילים בערבית'} – מילה או ביטוי בכל שורה</span>
             <textarea
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder={'apple\nto run\nbeautiful\nhouse'}
-              dir="ltr"
-              lang="en"
+              placeholder={lang === 'en' ? 'apple\nto run\nbeautiful\nhouse' : 'تفاحة\nيجري\nجميل\nبيت'}
+              dir={lang === 'en' ? 'ltr' : 'rtl'}
+              lang={lang}
               spellCheck={false}
               autoCapitalize="off"
             />
           </label>
-          <div className="muted hint">התרגום לעברית נעשה אוטומטית בשלב הבא, ואפשר לתקן אותו.</div>
+          <div className="muted hint">התרגום לעברית נעשה אוטומטית בשלב הבא, ואפשר לתקן אותו. אפשר גם לכתוב <bdi>word - תרגום</bdi> כדי לקבוע תרגום בעצמכם.</div>
 
           <label className="file-btn">
             📂 ייבוא מקובץ CSV / טקסט
@@ -148,7 +166,7 @@ export function DeckEditor({ existing, onSave, onCancel }: Props) {
           )}
 
           <button className="btn btn-primary" disabled={!canContinue} onClick={() => setStep('review')}>
-            {lang === 'en' ? 'תרגום המילים ←' : 'המשך ←'}
+            תרגום המילים ←
           </button>
         </>
       ) : (

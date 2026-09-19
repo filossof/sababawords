@@ -1,5 +1,7 @@
+import type { Lang } from '../types'
+
 /**
- * English → Hebrew translation for test-prep word lists, called straight from the browser.
+ * English/Arabic → Hebrew translation for test-prep word lists, called straight from the browser.
  *
  * Primary: Google's public web translate endpoint (unofficial, but free, CORS-enabled and accurate,
  * with alternative meanings). Fallback: MyMemory (official free API, less accurate).
@@ -31,9 +33,9 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 /** Response shape: [[[translated, original, …], …], [[partOfSpeech, [words…], …], …], …] */
-export async function viaGoogle(text: string): Promise<Translation | null> {
+export async function viaGoogle(text: string, lang: Lang = 'en'): Promise<Translation | null> {
   const url =
-    'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=iw&dt=t&dt=bd&q=' +
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${lang}&tl=iw&dt=t&dt=bd&q=` +
     encodeURIComponent(text)
   const data = (await getJson(url)) as unknown[]
   const segments = (data[0] as unknown[][] | null) ?? []
@@ -46,8 +48,8 @@ export async function viaGoogle(text: string): Promise<Translation | null> {
   return { he, alts }
 }
 
-export async function viaMyMemory(text: string): Promise<Translation | null> {
-  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en%7Che`
+export async function viaMyMemory(text: string, lang: Lang = 'en'): Promise<Translation | null> {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${lang}%7Che`
   const data = (await getJson(url)) as {
     responseStatus: number | string
     responseData: { translatedText: string }
@@ -63,7 +65,8 @@ export async function viaMyMemory(text: string): Promise<Translation | null> {
 }
 
 const CACHE_KEY = 'sababawords:translations:v1'
-const cacheKey = (text: string) => text.trim().toLowerCase()
+/** English keys stay as before; Arabic is prefixed so the two never collide. */
+const cacheKey = (text: string, lang: Lang) => (lang === 'en' ? '' : `${lang}:`) + text.trim().toLowerCase()
 
 function readCache(): Record<string, Translation> {
   try {
@@ -74,15 +77,15 @@ function readCache(): Record<string, Translation> {
 }
 
 /** Translates one word or phrase; null when every source failed (offline, blocked, unknown word). */
-export async function translate(text: string): Promise<Translation | null> {
-  const key = cacheKey(text)
+export async function translate(text: string, lang: Lang = 'en'): Promise<Translation | null> {
+  const key = cacheKey(text, lang)
   const hit = readCache()[key]
   if (hit) return hit
 
   let result: Translation | null = null
   for (const source of [viaGoogle, viaMyMemory]) {
     try {
-      result = await source(text)
+      result = await source(text, lang)
     } catch {
       result = null
     }

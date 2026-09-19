@@ -175,3 +175,6 @@ button:disabled { cursor: default; }
 .chip:active { background: var(--green-soft); border-color: var(--green); }
 
 .sound-hint { font-size: 0.8rem; margin-bottom: 0.25rem; }
+
+.link-btn { background: none; border: 0; color: var(--blue); font-weight: 700; padding: 0.2rem 0; text-decoration: underline; }
+.pill:disabled { opacity: 0.4; }

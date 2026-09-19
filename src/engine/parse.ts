@@ -81,7 +81,7 @@ export interface WordListResult {
 const LIST_MARKER = /^\s*(?:[•*·]|-(?=\s)|\d+[.)])\s*/
 
 /**
- * Parses what the user pastes for a test: normally just English words or phrases – one per line,
+ * Parses what the user pastes for a test: normally just English (or Arabic) words or phrases – one per line,
  * or separated by commas. A line that also contains Hebrew (`word - translation`) keeps that translation.
  */
 export function parseWordList(text: string, lang: Lang): WordListResult {
@@ -110,11 +110,7 @@ export function parseWordList(text: string, lang: Lang): WordListResult {
       else skipped.push({ line: i + 1, text: raw.trim(), reason: pair.skipped[0]?.reason ?? 'שורה לא מובנת' })
       return
     }
-    if (lang === 'ar') {
-      skipped.push({ line: i + 1, text: raw.trim(), reason: 'חסר תרגום בעברית' })
-      return
-    }
-    for (const piece of line.split(/[,;\t]/)) {
+    for (const piece of line.split(/[,;،؛\t]/)) {
       const target = clean(piece)
       if (target) add(target, undefined, i + 1, target)
     }

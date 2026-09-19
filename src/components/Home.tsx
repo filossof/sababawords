@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { allLessons, courses, langInfo, unitLessons } from '../data/courses'
+import { testSound } from '../sound'
 import type { Progress } from '../store/progress'
 import type { Lang } from '../types'
 
@@ -11,6 +13,7 @@ interface Props {
 }
 
 export function Home({ progress, onLang, onTranslit, onSound, onStart }: Props) {
+  const [soundCheck, setSoundCheck] = useState('')
   const course = courses[progress.lang]
   const order = allLessons(course).map((l) => l.id)
   const firstOpen = order.find((id) => !(id in progress.completed))
@@ -38,7 +41,17 @@ export function Home({ progress, onLang, onTranslit, onSound, onStart }: Props) 
         </div>
       </header>
 
-      {progress.soundOn && <div className="muted sound-hint">אין צליל? בדקו שהטלפון לא במצב שקט ושעוצמת השמע פתוחה.</div>}
+      {progress.soundOn && (
+        <div className="muted sound-hint">
+          <button
+            className="link-btn"
+            onClick={() => void testSound().then((ok) => setSoundCheck(ok ? 'הצליל נוגן. לא שמעתם? העלו את עוצמת המדיה בטלפון ובדקו שהאוזניות/בלוטות׳ לא מחוברים.' : 'הדפדפן חסם את הצליל – הקישו שוב על הכפתור.'))}
+          >
+            🔔 בדיקת צליל
+          </button>{' '}
+          {soundCheck}
+        </div>
+      )}
 
       {progress.lang === 'ar' && (
         <label className="toggle">
