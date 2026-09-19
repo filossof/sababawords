@@ -47,18 +47,20 @@ export const UNIT_SPECS: UnitSpec[] = [
     emoji: '🔢',
     color: '#1cb0f6',
     words: `
-אחד|one|واحد|ואחד|1️⃣
-שניים|two|اثنان|אתנאן|2️⃣
-שלושה|three|ثلاثة|תלאתה|3️⃣
-ארבעה|four|أربعة|ארבעה|4️⃣
-חמישה|five|خمسة|חמסה|5️⃣
-שישה|six|ستة|סתה|6️⃣
-שבעה|seven|سبعة|סבעה|7️⃣
+אחת|one|واحد|ואחד|1️⃣
+שתיים|two|اثنان|אתנאן|2️⃣
+שלוש|three|ثلاثة|תלאתה|3️⃣
+ארבע|four|أربعة|ארבעה|4️⃣
+חמש|five|خمسة|חמסה|5️⃣
+שש|six|ستة|סתה|6️⃣
+שבע|seven|سبعة|סבעה|7️⃣
 שמונה|eight|ثمانية|תמאניה|8️⃣
-תשעה|nine|تسعة|תסעה|9️⃣
-עשרה|ten|عشرة|עשרה|🔟
+תשע|nine|تسعة|תסעה|9️⃣
+עשר|ten|عشرة|עשרה|🔟
 מאה|hundred|مئة|מיאה|💯
 אפס|zero|صفر|צפר|0️⃣`,
+    // standalone numbers use the feminine form (the counting form: אחת, שתיים, שלוש…);
+    // in sentences the number agrees with the noun (שלושה כלבים, שתי אחיות)
     sentences: `
 יש לי שני אחים.|I have two brothers.|عندي أخوان.
 אני בן עשר.|I am ten years old.|عمري عشر سنوات.
