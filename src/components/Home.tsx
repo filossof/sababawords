@@ -1,7 +1,5 @@
-import { useState, type CSSProperties } from 'react'
-import { speak, useVoiceList } from '../audio'
+import type { CSSProperties } from 'react'
 import { allLessons, courses, langInfo, LEVELS_PER_UNIT, unitLevels } from '../data/courses'
-import { testSound } from '../sound'
 import type { Progress } from '../store/progress'
 import type { Lang } from '../types'
 import { Mascot } from './Mascot'
@@ -10,9 +8,7 @@ import { starsFor } from './LessonPlayer'
 interface Props {
   progress: Progress
   onLang: (l: Lang) => void
-  onTranslit: (v: boolean) => void
   onSound: (on: boolean) => void
-  onVoice: (lang: Lang, name: string) => void
   onStart: (lessonId: string) => void
 }
 
@@ -33,12 +29,10 @@ function trailPath(): string {
 }
 const PATH = trailPath()
 
-export function Home({ progress, onLang, onTranslit, onSound, onVoice, onStart }: Props) {
+export function Home({ progress, onLang, onSound, onStart }: Props) {
   const course = courses[progress.lang]
   const order = allLessons(course).map((l) => l.id)
   const firstOpen = order.find((id) => !(id in progress.completed))
-  const voices = useVoiceList(progress.lang)
-  const [soundCheck, setSoundCheck] = useState('')
 
   return (
     <div className="screen home">
@@ -66,56 +60,6 @@ export function Home({ progress, onLang, onTranslit, onSound, onVoice, onStart }
           </button>
         </div>
       </header>
-
-      <details className="settings">
-        <summary>⚙️ הגדרות צליל וקול</summary>
-        <div className="settings-body">
-          <div>
-            <button
-              className="link-btn"
-              onClick={() =>
-                void testSound().then((ok) =>
-                  setSoundCheck(ok ? 'הצליל נוגן. לא שמעתם? העלו את עוצמת המדיה בטלפון ובדקו שהאוזניות לא מחוברות.' : 'הדפדפן חסם את הצליל – הקישו שוב.'),
-                )
-              }
-            >
-              🔔 בדיקת צליל
-            </button>{' '}
-            <span className="muted">{soundCheck}</span>
-          </div>
-
-          <label className="voice-row">
-            <span>
-              קול ההקראה ({langInfo[progress.lang].he}):
-            </span>
-            <select
-              value={progress.voices[progress.lang] ?? ''}
-              onChange={(e) => onVoice(progress.lang, e.target.value)}
-              aria-label="קול ההקראה"
-            >
-              <option value="">אוטומטי (מומלץ)</option>
-              {voices.map((v) => (
-                <option key={v.name} value={v.name}>
-                  {v.name} ({v.lang})
-                </option>
-              ))}
-            </select>
-            <button
-              className="link-btn"
-              onClick={() => speak(progress.lang === 'en' ? 'white, wait, weight' : 'مرحبا', progress.lang)}
-            >
-              ▶ נסו את הקול
-            </button>
-          </label>
-
-          {progress.lang === 'ar' && (
-            <label className="toggle">
-              <input type="checkbox" checked={progress.showTranslit} onChange={(e) => onTranslit(e.target.checked)} />
-              הצגת תעתיק באותיות עבריות
-            </label>
-          )}
-        </div>
-      </details>
 
       {course.units.map((unit, ui) => {
         const levels = unitLevels(course, unit)

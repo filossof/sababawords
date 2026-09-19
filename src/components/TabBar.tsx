@@ -1,16 +1,20 @@
-export type Tab = 'learn' | 'decks'
+export type Tab = 'learn' | 'decks' | 'settings'
+
+const TABS: [Tab, string, string][] = [
+  ['learn', '📚', 'לימוד'],
+  ['decks', '🎯', 'הכנה למבחן'],
+  ['settings', '⚙️', 'הגדרות'],
+]
 
 export function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   return (
     <nav className="tabbar">
-      <button className={tab === 'learn' ? 'active' : ''} onClick={() => onTab('learn')}>
-        <span>📚</span>
-        לימוד
-      </button>
-      <button className={tab === 'decks' ? 'active' : ''} onClick={() => onTab('decks')}>
-        <span>🎯</span>
-        הכנה למבחן
-      </button>
+      {TABS.map(([id, icon, label]) => (
+        <button key={id} className={tab === id ? 'active' : ''} onClick={() => onTab(id)}>
+          <span>{icon}</span>
+          {label}
+        </button>
+      ))}
     </nav>
   )
 }

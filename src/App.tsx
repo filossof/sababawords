@@ -6,6 +6,7 @@ import { DeckList } from './components/DeckList'
 import { Home } from './components/Home'
 import { LessonPlayer } from './components/LessonPlayer'
 import { MockTest } from './components/MockTest'
+import { Settings } from './components/Settings'
 import { TabBar, type Tab } from './components/TabBar'
 import { allLessons, courses, langInfo } from './data/courses'
 import { generateLevel } from './engine/level'
@@ -20,8 +21,7 @@ import type { Exercise } from './types'
 const PREP_THEME = { color: '#1cb0f6', emoji: '🎯' }
 
 type View =
-  | { name: 'learn' }
-  | { name: 'decks' }
+  | { name: Tab }
   | { name: 'edit'; deckId?: string }
   | { name: 'deck'; deckId: string }
   | { name: 'mock'; deckId: string; questions: Exercise[] }
@@ -136,13 +136,19 @@ export default function App() {
     )
   }
 
-  const tab: Tab = view.name === 'learn' ? 'learn' : 'decks'
+  const tab: Tab = view.name === 'learn' ? 'learn' : view.name === 'settings' ? 'settings' : 'decks'
   const withTabs = (screen: React.ReactNode) => (
     <div className="with-tabbar">
       {screen}
-      <TabBar tab={tab} onTab={(t) => setView(t === 'learn' ? { name: 'learn' } : { name: 'decks' })} />
+      <TabBar tab={tab} onTab={(t) => setView({ name: t })} />
     </div>
   )
+
+  function toggleSound(on: boolean) {
+    setSoundOn(on)
+    setSoundEnabled(on)
+    if (on) sfx.correct() // audible confirmation that sound works
+  }
 
   const decksScreen = () =>
     withTabs(
@@ -157,11 +163,12 @@ export default function App() {
   switch (view.name) {
     case 'learn':
       return withTabs(
-        <Home progress={progress} onLang={setLang} onTranslit={setShowTranslit} onVoice={setVoice} onSound={(on) => {
-          setSoundOn(on)
-          setSoundEnabled(on)
-          if (on) sfx.correct() // audible confirmation that sound works
-        }} onStart={startLesson} />,
+        <Home progress={progress} onLang={setLang} onSound={toggleSound} onStart={startLesson} />,
+      )
+
+    case 'settings':
+      return withTabs(
+        <Settings progress={progress} onSound={toggleSound} onVoice={setVoice} onTranslit={setShowTranslit} />,
       )
 
     case 'decks':
