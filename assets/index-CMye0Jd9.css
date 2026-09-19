@@ -1,0 +1,1 @@
+:root{--green:#58cc02;--green-dark:#46a302;--ink:#3c3c3c;--bg:#fff;color:var(--ink);background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}*{box-sizing:border-box}body{min-height:100dvh;margin:0}#root{flex-direction:column;min-height:100dvh;display:flex}.hello{text-align:center;margin:auto;padding:1rem}.hello h1{color:var(--green-dark);margin:.5rem 0}
