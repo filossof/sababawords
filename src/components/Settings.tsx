@@ -7,6 +7,10 @@ import type { Lang } from '../types'
 
 interface Props {
   progress: Progress
+  /** how many test decks exist – shown so the reset warning is concrete */
+  deckCount: number
+  onResetLearning: () => void
+  onResetEverything: () => void
   onSound: (on: boolean) => void
   onVoice: (lang: Lang, name: string) => void
   onTranslit: (v: boolean) => void
@@ -42,8 +46,15 @@ function VoicePicker({ lang, value, onVoice }: { lang: Lang; value: string; onVo
   )
 }
 
-export function Settings({ progress, onSound, onVoice, onTranslit }: Props) {
+export function Settings({ progress, deckCount, onSound, onVoice, onTranslit, onResetLearning, onResetEverything }: Props) {
   const [soundCheck, setSoundCheck] = useState('')
+  const [done, setDone] = useState('')
+
+  const confirmReset = (question: string, run: () => void, message: string) => () => {
+    if (!window.confirm(question)) return
+    run()
+    setDone(message)
+  }
 
   return (
     <div className="screen settings-screen">
@@ -89,6 +100,39 @@ export function Settings({ progress, onSound, onVoice, onTranslit }: Props) {
           <span className="setting-label">הצגת תעתיק באותיות עבריות</span>
           <input type="checkbox" className="switch" checked={progress.showTranslit} onChange={(e) => onTranslit(e.target.checked)} />
         </label>
+      </section>
+
+      <section className="settings-card danger">
+        <h2>🧹 התחלה מחדש</h2>
+        <div className="setting-row">
+          <button
+            className="btn btn-ghost small"
+            onClick={confirmReset(
+              'לאפס את התקדמות הלימוד? כל השלבים יינעלו והנקודות והרצף יתאפסו. המבחנים שיצרתם יישארו.',
+              onResetLearning,
+              'התקדמות הלימוד אופסה.',
+            )}
+          >
+            🔄 איפוס התקדמות הלימוד
+          </button>
+          <span className="muted">השלבים, הנקודות והרצף – המבחנים נשארים</span>
+        </div>
+        <div className="setting-row">
+          <button
+            className="btn btn-danger small"
+            onClick={confirmReset(
+              `למחוק הכול? גם התקדמות הלימוד וגם ${deckCount} המבחנים שיצרתם יימחקו. אי אפשר לבטל.`,
+              onResetEverything,
+              'הכול נמחק – אפשר להתחיל מהתחלה.',
+            )}
+          >
+            🗑 מחיקת הכול
+          </button>
+          <span className="muted">
+            גם התקדמות הלימוד וגם המבחנים ({deckCount})
+          </span>
+        </div>
+        {done && <div className="parse-summary ok">{done}</div>}
       </section>
     </div>
   )

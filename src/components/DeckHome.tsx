@@ -12,12 +12,13 @@ interface Props {
   onBack: () => void
   onEdit: () => void
   onDelete: () => void
+  onReset: () => void
   onStartLesson: (lesson: PrepLesson) => void
   onPractice: (wordIds: string[]) => void
   onMock: () => void
 }
 
-export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onStartLesson, onPractice, onMock }: Props) {
+export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onReset, onStartLesson, onPractice, onMock }: Props) {
   const levels = useMemo(() => buildLevels(deck.words, deck.lang), [deck.words, deck.lang])
   const ids = useMemo(() => deck.words.map((w) => w.id), [deck.words])
   const weak = weakWordIds(ids, progress.stats)
@@ -89,6 +90,14 @@ export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onStartLess
         </button>
         <button className="btn btn-ghost small" onClick={onEdit}>
           ✏️ עריכה
+        </button>
+        <button
+          className="btn btn-ghost small"
+          onClick={() =>
+            window.confirm(`להתחיל את "${deck.name}" מהתחלה? השלבים יינעלו והסטטיסטיקה תימחק – המילים יישארו.`) && onReset()
+          }
+        >
+          🔄 התחלה מחדש
         </button>
         <button
           className="btn btn-ghost small"

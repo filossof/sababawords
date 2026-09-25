@@ -99,6 +99,17 @@ export function useDecks() {
     })
   }, [])
 
+  /** Starts a deck over: its levels lock again and its word statistics are cleared. The words stay. */
+  const resetDeck = useCallback((id: string) => {
+    setState((s) => {
+      const deck = s.decks.find((d) => d.id === id)
+      return deck ? { ...s, progress: { ...s.progress, [id]: emptyProgress(deck.words) } } : s
+    })
+  }, [])
+
+  /** Removes every deck and all of their progress. */
+  const deleteAllDecks = useCallback(() => setState({ decks: [], progress: {} }), [])
+
   const completeLesson = useCallback(
     (deckId: string, lessonId: string | null, practiced: string[], missed: string[], accuracy: number) => {
       setState((s) => {
@@ -136,5 +147,14 @@ export function useDecks() {
     })
   }, [])
 
-  return { decks: state.decks, progress: state.progress, saveDeck, deleteDeck, completeLesson, recordMock }
+  return {
+    decks: state.decks,
+    progress: state.progress,
+    saveDeck,
+    deleteDeck,
+    resetDeck,
+    deleteAllDecks,
+    completeLesson,
+    recordMock,
+  }
 }

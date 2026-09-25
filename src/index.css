@@ -36,11 +36,11 @@ button:disabled { cursor: default; }
 .icon-btn { background: none; border: 0; font-size: 1.4rem; color: var(--muted); padding: 0.25rem 0.5rem; }
 
 /* home */
-.home-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.home-top { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; }
 .langs { display: flex; gap: 0.5rem; }
 .pill { border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 0.4rem 0.9rem; font-weight: 700; }
 .pill.active { border-color: var(--blue); background: #e6f6ff; color: #0a7bb5; }
-.scores { display: flex; gap: 1rem; font-weight: 800; font-size: 1.1rem; }
+.scores { display: flex; align-items: center; gap: 0.4rem; font-weight: 800; font-size: 1rem; }
 .toggle { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
 .unit { margin-top: 1.5rem; }
 .unit-title { background: var(--green); color: #fff; border-radius: 16px; padding: 0.7rem 1rem; margin: 0 0 1rem; font-size: 1.15rem; }
@@ -326,3 +326,12 @@ button:disabled { cursor: default; }
 /* Bulgarian: the system font switches to localized shapes (в→ʙ, д→g, и→u, т→m) that a
    beginner cannot match to a keyboard, so use a font with the familiar upright forms. */
 [lang='bg'] { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+
+/* header fits on one line on a phone */
+.lang-select { min-width: 0; }
+.lang-select select { max-width: 42vw; text-overflow: ellipsis; font-size: 0.95rem; padding: 0.4rem 0.5rem; }
+.home-top .chip-stat { padding: 0.2rem 0.5rem; white-space: nowrap; }
+.home-top .icon-btn { padding: 0.2rem; }
+
+.settings-card.danger { border-color: #ffd7d7; background: #fffafa; }
+.settings-card.danger h2 { color: var(--red-dark); }

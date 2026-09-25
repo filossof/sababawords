@@ -27,7 +27,7 @@ type View =
   | { name: 'mock'; deckId: string; questions: Exercise[] }
 
 export default function App() {
-  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp } = useProgress()
+  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp, resetLearning } = useProgress()
   const store = useDecks()
   const [view, setView] = useState<View>({ name: 'learn' })
   const [session, setSession] = useState<{ def: PlaySession; exercises: Exercise[]; attempt: number } | null>(null)
@@ -168,7 +168,18 @@ export default function App() {
 
     case 'settings':
       return withTabs(
-        <Settings progress={progress} onSound={toggleSound} onVoice={setVoice} onTranslit={setShowTranslit} />,
+        <Settings
+          progress={progress}
+          deckCount={store.decks.length}
+          onSound={toggleSound}
+          onVoice={setVoice}
+          onTranslit={setShowTranslit}
+          onResetLearning={resetLearning}
+          onResetEverything={() => {
+            resetLearning()
+            store.deleteAllDecks()
+          }}
+        />,
       )
 
     case 'decks':
@@ -202,6 +213,7 @@ export default function App() {
             store.deleteDeck(deck.id)
             setView({ name: 'decks' })
           }}
+          onReset={() => store.resetDeck(deck.id)}
           onStartLesson={(lesson) => startPrepLesson(deck, lesson)}
           onPractice={(ids) => practiceWords(deck, ids)}
           onMock={() =>

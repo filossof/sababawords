@@ -51,6 +51,13 @@ export function useProgress() {
     }
   }, [progress])
 
+  /** Clears everything the learner earned (levels, XP, streak) but keeps their preferences. */
+  const resetLearning = useCallback(
+    () =>
+      setProgress((p) => ({ ...initial, lang: p.lang, showTranslit: p.showTranslit, soundOn: p.soundOn, voices: p.voices })),
+    [],
+  )
+
   const setLang = useCallback((lang: Lang) => setProgress((p) => ({ ...p, lang })), [])
   const setShowTranslit = useCallback(
     (showTranslit: boolean) => setProgress((p) => ({ ...p, showTranslit })),
@@ -80,5 +87,5 @@ export function useProgress() {
     })
   }, [])
 
-  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp }
+  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp, resetLearning }
 }
