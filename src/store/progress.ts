@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { Listening } from '../audio'
 import type { Lang } from '../types'
 
 export interface Progress {
@@ -10,6 +11,8 @@ export interface Progress {
   completed: Record<string, number>
   showTranslit: boolean
   soundOn: boolean
+  /** listening exercises: follow the device, or force them on/off */
+  listening: Listening
   /** chosen text-to-speech voice per language (by name); missing = automatic */
   voices: Partial<Record<Lang, string>>
 }
@@ -24,6 +27,7 @@ const initial: Progress = {
   completed: {},
   showTranslit: true,
   soundOn: true,
+  listening: 'auto',
   voices: {},
 }
 
@@ -54,7 +58,14 @@ export function useProgress() {
   /** Clears everything the learner earned (levels, XP, streak) but keeps their preferences. */
   const resetLearning = useCallback(
     () =>
-      setProgress((p) => ({ ...initial, lang: p.lang, showTranslit: p.showTranslit, soundOn: p.soundOn, voices: p.voices })),
+      setProgress((p) => ({
+        ...initial,
+        lang: p.lang,
+        showTranslit: p.showTranslit,
+        soundOn: p.soundOn,
+        listening: p.listening,
+        voices: p.voices,
+      })),
     [],
   )
 
@@ -69,6 +80,8 @@ export function useProgress() {
       setProgress((p) => ({ ...p, voices: { ...p.voices, [lang]: name || undefined } })),
     [],
   )
+
+  const setListeningMode = useCallback((listening: Listening) => setProgress((p) => ({ ...p, listening })), [])
 
   const setSoundOn = useCallback((soundOn: boolean) => setProgress((p) => ({ ...p, soundOn })), [])
 
@@ -87,5 +100,5 @@ export function useProgress() {
     })
   }, [])
 
-  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp, resetLearning }
+  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, setListeningMode, earnXp, resetLearning }
 }

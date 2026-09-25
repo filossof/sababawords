@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { setVoicePreferences, useVoice } from './audio'
+import { setListening, setVoicePreferences, useVoice } from './audio'
 import { DeckEditor } from './components/DeckEditor'
 import { DeckHome } from './components/DeckHome'
 import { DeckList } from './components/DeckList'
@@ -27,7 +27,7 @@ type View =
   | { name: 'mock'; deckId: string; questions: Exercise[] }
 
 export default function App() {
-  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, earnXp, resetLearning } = useProgress()
+  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, setListeningMode, earnXp, resetLearning } = useProgress()
   const store = useDecks()
   const [view, setView] = useState<View>({ name: 'learn' })
   const [session, setSession] = useState<{ def: PlaySession; exercises: Exercise[]; attempt: number } | null>(null)
@@ -37,6 +37,7 @@ export default function App() {
   useEffect(installClickSounds, [])
   useEffect(() => setSoundEnabled(progress.soundOn), [progress.soundOn])
   useEffect(() => setVoicePreferences(progress.voices), [progress.voices])
+  useEffect(() => setListening(progress.listening), [progress.listening])
 
   // a shared deck arrives as a link like …/sababawords/#deck=<code>
   useEffect(() => {
@@ -174,6 +175,7 @@ export default function App() {
           onSound={toggleSound}
           onVoice={setVoice}
           onTranslit={setShowTranslit}
+          onListening={setListeningMode}
           onResetLearning={resetLearning}
           onResetEverything={() => {
             resetLearning()

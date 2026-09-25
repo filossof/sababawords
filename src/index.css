@@ -335,3 +335,7 @@ button:disabled { cursor: default; }
 
 .settings-card.danger { border-color: #ffd7d7; background: #fffafa; }
 .settings-card.danger h2 { color: var(--red-dark); }
+
+.help { font-size: 0.85rem; color: var(--muted); }
+.help summary { cursor: pointer; color: var(--blue); font-weight: 700; }
+.help ul { margin: 0.4rem 0 0; padding-inline-start: 1.1rem; display: flex; flex-direction: column; gap: 0.3rem; }
