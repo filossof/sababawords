@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { speak } from '../audio'
+import { inLang } from '../data/courses'
 import type { Word } from '../types'
 import type { ExerciseProps } from './exerciseProps'
 import { Speaker } from './Speaker'
@@ -30,8 +31,7 @@ export function MultipleChoice({ word, options, mode, audio, blind, lang, showTr
     else onDone(id === word.id)
   }
 
-  const langName = lang === 'en' ? 'באנגלית' : 'בערבית'
-  const title = mode === 'listen' ? 'מה שמעתם?' : pickTarget ? `איך אומרים ${langName}?` : 'מה המשמעות?'
+  const title = mode === 'listen' ? 'מה שמעתם?' : pickTarget ? `איך אומרים ${inLang(lang)}?` : 'מה המשמעות?'
 
   return (
     <div className="exercise">
@@ -63,7 +63,7 @@ export function MultipleChoice({ word, options, mode, audio, blind, lang, showTr
               {pickTarget ? (
                 <>
                   <Txt lang={lang}>{o.target}</Txt>
-                  {lang === 'ar' && showTranslit && o.translit && <Txt lang="he" className="translit-sm">{o.translit}</Txt>}
+                  {lang !== 'en' && showTranslit && o.translit && <Txt lang="he" className="translit-sm">{o.translit}</Txt>}
                 </>
               ) : (
                 <Txt lang="he">{o.he}</Txt>

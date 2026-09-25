@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { speak } from '../audio'
+import { toLang } from '../data/courses'
 import { sameSentence } from '../engine/check'
 import type { Word } from '../types'
 import type { ExerciseProps } from './exerciseProps'
 import { Speaker } from './Speaker'
-import { Txt } from './Txt'
+import { dirOf, Txt } from './Txt'
 
 interface Props extends ExerciseProps {
   word: Word
@@ -19,7 +20,7 @@ export function WordBank({ word, dir, tokens, audio, lang, onDone }: Props) {
   const [done, setDone] = useState(false)
   const answerLang = dir === 'toHe' ? 'he' : lang
   const answer = dir === 'toHe' ? word.he : word.target
-  const rtl = answerLang !== 'en'
+  const rtl = dirOf(answerLang) === 'rtl'
   const built = useMemo(() => placed.map((i) => tokens[i]).join(' '), [placed, tokens])
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export function WordBank({ word, dir, tokens, audio, lang, onDone }: Props) {
   }
 
   const title =
-    dir === 'listen' ? 'הקשיבו וכתבו את המשפט' : dir === 'toHe' ? 'תרגמו לעברית' : `תרגמו ${lang === 'en' ? 'לאנגלית' : 'לערבית'}`
+    dir === 'listen' ? 'הקשיבו וכתבו את המשפט' : dir === 'toHe' ? 'תרגמו לעברית' : `תרגמו ${toLang(lang)}`
 
   return (
     <div className="exercise">

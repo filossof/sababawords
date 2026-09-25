@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { isCorrectTyped } from '../engine/check'
-import type { Word } from '../types'
+import { inLang } from '../data/courses'
+import type { Lang, Word } from '../types'
 import type { ExerciseProps } from './exerciseProps'
 import { Keyboard } from './Keyboard'
-import { Txt } from './Txt'
+import { dirOf, Txt } from './Txt'
 
-const allowed = { en: /^[a-zA-Z' -]$/, ar: /^[؀-ۿ ]$/ }
+const allowed: Record<Lang, RegExp> = {
+  en: /^[a-zA-Z' -]$/,
+  ar: /^[\u0600-\u06FF ]$/,
+  bg: /^[\u0400-\u04FF ]$/,
+}
 
 export function TypeAnswer({ word, lang, onDone }: ExerciseProps & { word: Word }) {
   const [text, setText] = useState('')
@@ -32,16 +37,15 @@ export function TypeAnswer({ word, lang, onDone }: ExerciseProps & { word: Word 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang])
 
-  const langName = lang === 'en' ? 'באנגלית' : 'בערבית'
   return (
     <div className="exercise">
-      <h2 className="title">כתבו {langName}</h2>
+      <h2 className="title">כתבו {inLang(lang)}</h2>
       <div className="prompt">
         <Txt lang="he" className="big-word">
           {word.he}
         </Txt>
       </div>
-      <div className="typed" lang={lang} dir={lang === 'en' ? 'ltr' : 'rtl'}>
+      <div className="typed" lang={lang} dir={dirOf(lang)}>
         {text || <span className="placeholder">…</span>}
       </div>
       <Keyboard lang={lang} disabled={done} onKey={(k) => setText((t) => t + k)} onBackspace={() => setText((t) => t.slice(0, -1))} />

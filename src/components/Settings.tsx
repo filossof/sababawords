@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { speak, useVoiceList } from '../audio'
-import { langInfo } from '../data/courses'
+import { langInfo, LANGS } from '../data/courses'
 import { testSound } from '../sound'
 import type { Progress } from '../store/progress'
 import type { Lang } from '../types'
@@ -12,7 +12,7 @@ interface Props {
   onTranslit: (v: boolean) => void
 }
 
-const SAMPLE: Record<Lang, string> = { en: 'white, wait, weight', ar: 'مرحبا، كيف حالك؟' }
+const SAMPLE: Record<Lang, string> = { en: 'white, wait, weight', ar: 'مرحبا، كيف حالك؟', bg: 'Здравей, как си?' }
 
 function VoicePicker({ lang, value, onVoice }: { lang: Lang; value: string; onVoice: Props['onVoice'] }) {
   const voices = useVoiceList(lang)
@@ -78,7 +78,7 @@ export function Settings({ progress, onSound, onVoice, onTranslit }: Props) {
 
       <section className="settings-card">
         <h2>🗣️ קול ההקראה</h2>
-        {(Object.keys(langInfo) as Lang[]).map((l) => (
+        {LANGS.map((l) => (
           <VoicePicker key={l} lang={l} value={progress.voices[l] ?? ''} onVoice={onVoice} />
         ))}
       </section>

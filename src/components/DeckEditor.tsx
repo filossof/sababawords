@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { langInfo } from '../data/courses'
+import { langInfo, LANGS } from '../data/courses'
 import { parseWordList, wordId } from '../engine/parse'
 import { runPool, translate } from '../engine/translate'
 import { newDeckId, type Deck } from '../store/decks'
@@ -7,6 +7,12 @@ import type { Lang } from '../types'
 import { Txt } from './Txt'
 
 const MIN_WORDS = 4
+
+const PLACEHOLDER: Record<Lang, string> = {
+  en: 'apple\nto run\nbeautiful\nhouse',
+  ar: 'تفاحة\nيجري\nجميل\nبيت',
+  bg: 'ябълка\nда тичам\nкрасив\nкъща',
+}
 
 interface Entry {
   he: string
@@ -104,22 +110,22 @@ export function DeckEditor({ existing, onSave, onCancel }: Props) {
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="למשל: אנגלית – יחידה 5" maxLength={60} />
           </label>
 
-          <div className="field">
+          <label className="field">
             <span>שפת המבחן</span>
-            <div className="langs">
-              {(Object.keys(langInfo) as Lang[]).map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  className={`pill ${l === lang ? 'active' : ''}`}
-                  disabled={!!existing && l !== lang}
-                  onClick={() => setLang(l)}
-                >
+            <select
+              value={lang}
+              disabled={!!existing}
+              onChange={(e) => setLang(e.target.value as Lang)}
+              aria-label="שפת המבחן"
+            >
+              {LANGS.map((l) => (
+                <option key={l} value={l}>
                   {langInfo[l].flag} {langInfo[l].he}
-                </button>
+                </option>
               ))}
-            </div>
-          </div>
+            </select>
+            {existing && <small className="muted">אי אפשר לשנות את שפת המבחן אחרי שנוצר</small>}
+          </label>
 
           <label className="field">
             <span>תאריך המבחן (לא חובה)</span>
@@ -127,13 +133,13 @@ export function DeckEditor({ existing, onSave, onCancel }: Props) {
           </label>
 
           <label className="field">
-            <span>{lang === 'en' ? 'המילים באנגלית' : 'המילים בערבית'} – מילה או ביטוי בכל שורה</span>
+            <span>המילים ב{langInfo[lang].he} – מילה או ביטוי בכל שורה</span>
             <textarea
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder={lang === 'en' ? 'apple\nto run\nbeautiful\nhouse' : 'تفاحة\nيجري\nجميل\nبيت'}
-              dir={lang === 'en' ? 'ltr' : 'rtl'}
+              placeholder={PLACEHOLDER[lang]}
+              dir={langInfo[lang].dir}
               lang={lang}
               spellCheck={false}
               autoCapitalize="off"

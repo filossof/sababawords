@@ -1,6 +1,6 @@
 # SababaWords – Design
 
-**Goal:** Duolingo-style game for Hebrew-speaking kids aged 10–14 learning English and Arabic (MSA),
+**Goal:** Duolingo-style game for Hebrew-speaking kids aged 10–14 learning English, Arabic (MSA) and Bulgarian,
 plus a **test-prep** feature: enter a language + vocabulary list → generated levels.
 
 ## Architecture
@@ -35,8 +35,8 @@ src/store/       progress + decks
 ```
 
 ## Course structure
-16 units (`src/data/units.ts`), each with 12 words and 6 sentences, shared by English and Arabic so both stay aligned
-(Hebrew meanings and emoji pictures are written once; English/Arabic text and Arabic transliteration per language).
+16 units (`src/data/units.ts`), each with 12 words and 6 sentences, shared by all three languages so they stay aligned
+(Hebrew meanings and emoji pictures are written once; per-language text plus a Hebrew-letter transliteration for Arabic and Bulgarian).
 Every unit has 8 levels (`src/data/courses.ts`): 3 word intros, a review, 2 sentence intros, sentence practice, a challenge.
 `src/engine/level.ts` builds each level with 9–10 exercises; a level never shows more than 12 questions (retries fit inside that).
 Exercise types: flashcard, multiple choice (both directions, with pictures), picture choice, matching, listening,
@@ -44,12 +44,18 @@ sentence word-bank (translate both ways, or hear-and-build), letter tiles, typin
 Test-prep lessons are also kept to 8–12 questions (`chunkEven` + padding/trimming); only the mock test is longer.
 
 ## Writing is introduced gradually
-English: units 1-2 no writing, units 3-5 letter tiles, unit 6+ typing. Arabic: units 1-6 none, then typing.
+English: units 1-2 none, 3-5 letter tiles, 6+ typing. Bulgarian: 1-3 none, 4-6 tiles, 7+ typing. Arabic: 1-6 none, then typing (its letters change shape by position, so no tiles).
 Writing appears only in the review and challenge levels of a unit.
 
 ## Graphics
 Unit banners with theme colours, a winding level trail with stars/crown, the Sprout mascot (SVG, moods) on the map,
 in feedback and on result screens, emoji pictures on cards/questions, confetti + stars on completion, hearts row, combo badge.
+
+## Languages
+`Lang = 'en' | 'ar' | 'bg'`; `langInfo`/`LANGS` in `src/data/courses.ts` drive every language list, label
+("איך אומרים בבולגרית?") and text direction. On-screen keyboards per script (`src/components/Keyboard.tsx`);
+Bulgarian text is pinned to a font with the familiar upright Cyrillic forms (the system font's Bulgarian
+localized shapes – в→ʙ, д→g, и→u – are unreadable for a beginner).
 
 ## Voices
 `src/audio.ts` ranks text-to-speech voices and hides novelty voices (macOS "Albert" etc. mispronounce words),
@@ -68,7 +74,7 @@ mute toggle + "test sound" button on the home screen.
 `src/store/decks.ts` (decks + per-deck progress in localStorage), `src/store/share.ts` (deck ↔ URL hash, deflate-compressed).
 
 ## Test input is English or Arabic, translated automatically
-The user picks the test language and types/pastes the words (one per line or comma separated). `src/engine/translate.ts` translates
+The user picks the test language (dropdown: English / Arabic / Bulgarian) and types/pastes the words (one per line or comma separated). `src/engine/translate.ts` translates
 English/Arabic to Hebrew in the browser: Google's public web endpoint first (accurate, with alternatives; unofficial, rate-limited),
 MyMemory as fallback, results cached in localStorage. A review step lets a human fix every translation
 (type, tap an alternative, retry) before the deck is saved; failed translations must be typed manually.

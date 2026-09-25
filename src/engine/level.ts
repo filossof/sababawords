@@ -69,7 +69,7 @@ export function generateLevel(def: LessonDef, ctx: LevelContext): Exercise[] {
     dir === 'listen' && !ctx.audio ? mcS(s) : { kind: 'bank', word: s, dir, tokens: bankTokens(s, dir, sentPool, rng) }
   const writing = (w: Word, how: Writing, fallback: (w: Word) => Exercise): Exercise => {
     if (how === 'type' && canType(w.target, ctx.lang)) return { kind: 'type', word: w }
-    if (how === 'scramble' && canScramble(w.target)) return { kind: 'scramble', word: w }
+    if (how === 'scramble' && canScramble(w.target, ctx.lang)) return { kind: 'scramble', word: w }
     return fallback(w)
   }
   const match = (ws: Word[]): Exercise => ({ kind: 'match', pairs: shuffle(ws, rng) })

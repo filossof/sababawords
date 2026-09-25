@@ -1,4 +1,4 @@
-export type Lang = 'en' | 'ar'
+export type Lang = 'en' | 'ar' | 'bg'
 
 /** A vocabulary word – or a whole sentence (`sentence: true`), which the exercises treat the same way. */
 export interface Word {
@@ -7,7 +7,7 @@ export interface Word {
   target: string
   /** Hebrew meaning */
   he: string
-  /** Hebrew-letter transliteration (Arabic only) */
+  /** Hebrew-letter transliteration (Arabic and Bulgarian – both use a different alphabet) */
   translit?: string
   /** a picture (emoji) that shows the meaning */
   pic?: string

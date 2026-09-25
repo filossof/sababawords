@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { Lang } from './types'
 
-const locale: Record<Lang, string> = { en: 'en-US', ar: 'ar-SA' }
+const locale: Record<Lang, string> = { en: 'en-US', ar: 'ar-SA', bg: 'bg-BG' }
 
 /** Voices that are jokes or sound effects (macOS "novelty" voices) – they mispronounce ordinary words. */
 const NOVELTY =
   /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Junior|Organ|Ralph|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Kathy|Grandma|Grandpa|Eddy|Flo|Reed|Rocko|Sandy|Shelley)\b/i
 
 /** Natural-sounding voices, best first. */
-const PREFERRED = /Samantha|Google US English|Aria|Jenny|Ava|Allison|Alex|Susan|Zira|Google UK English|Daniel|Karen|Moira|Tessa|Natural|Neural|Premium|Enhanced/i
+const PREFERRED = /Daria|Samantha|Google US English|Aria|Jenny|Ava|Allison|Alex|Susan|Zira|Google UK English|Daniel|Karen|Moira|Tessa|Natural|Neural|Premium|Enhanced/i
 
 let preferred: Partial<Record<Lang, string>> = {}
 

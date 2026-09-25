@@ -3,6 +3,8 @@ import type { Lang } from '../types'
 const rows: Record<Lang, string[]> = {
   en: ['qwertyuiop', 'asdfghjkl', "zxcvbnm'-"],
   ar: ['ضصثقفغعهخحجد', 'شسيبلاتنمكط', 'ئءؤرىةوزظ', 'أإآذ'],
+  // the Bulgarian alphabet in order – easier to find a letter than a typewriter layout
+  bg: ['абвгдежзий', 'клмнопрсту', 'фхцчшщъьюя'],
 }
 
 interface Props {
@@ -15,7 +17,7 @@ interface Props {
 /** On-screen keyboard so Arabic works on any device, and no native keyboard covers the screen. */
 export function Keyboard({ lang, disabled, onKey, onBackspace }: Props) {
   return (
-    <div className="keyboard" dir="ltr" lang={lang}>
+    <div className={`keyboard ${lang === 'ar' ? 'kb-ar' : ''}`} dir="ltr" lang={lang}>
       {rows[lang].map((row) => (
         <div className="kb-row" key={row}>
           {[...row].map((k) => (

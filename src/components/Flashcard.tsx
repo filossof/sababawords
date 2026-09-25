@@ -12,7 +12,7 @@ export function Flashcard({ word, lang, showTranslit, audio, onDone }: ExerciseP
         <Txt lang={lang} className={word.sentence ? 'card-sentence' : 'big-word'}>
           {word.target}
         </Txt>
-        {lang === 'ar' && showTranslit && word.translit && (
+        {lang !== 'en' && showTranslit && word.translit && (
           <Txt lang="he" className="translit">
             {word.translit}
           </Txt>

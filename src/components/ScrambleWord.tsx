@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { shuffle } from '../engine/generate'
+import { inLang } from '../data/courses'
 import type { Word } from '../types'
 import type { ExerciseProps } from './exerciseProps'
-import { Txt } from './Txt'
+import { dirOf, Txt } from './Txt'
 
 /** Build the English word by tapping letter tiles in order – gentler than typing. */
 export function ScrambleWord({ word, lang, onDone }: ExerciseProps & { word: Word }) {
@@ -27,13 +28,13 @@ export function ScrambleWord({ word, lang, onDone }: ExerciseProps & { word: Wor
 
   return (
     <div className="exercise">
-      <h2 className="title">סדרו את האותיות באנגלית</h2>
+      <h2 className="title">סדרו את האותיות {inLang(lang)}</h2>
       <div className="prompt">
         <Txt lang="he" className="big-word">
           {word.he}
         </Txt>
       </div>
-      <div className="tiles slots" dir="ltr" lang={lang}>
+      <div className="tiles slots" dir={dirOf(lang)} lang={lang}>
         {placed.length === 0 && <span className="placeholder">…</span>}
         {placed.map((id) => (
           <button key={id} className="tile" disabled={done} onClick={() => setPlaced((p) => p.filter((x) => x !== id))}>
@@ -41,7 +42,7 @@ export function ScrambleWord({ word, lang, onDone }: ExerciseProps & { word: Wor
           </button>
         ))}
       </div>
-      <div className="tiles pool" dir="ltr" lang={lang}>
+      <div className="tiles pool" dir={dirOf(lang)} lang={lang}>
         {letters.map((t) => (
           <button
             key={t.id}

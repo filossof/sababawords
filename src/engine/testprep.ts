@@ -42,7 +42,7 @@ const LEVELS: { kind: Exclude<PrepKind, 'weak'>; title: string; emoji: string; b
   { kind: 'meet', title: 'הכירו את המילים', emoji: '👀', blurb: 'כרטיסיות עם הקראה ושאלות קלות', max: () => 6 },
   { kind: 'recognize', title: 'זיהוי', emoji: '🎯', blurb: 'מה המשמעות – ובחזרה', max: () => 6 },
   { kind: 'match', title: 'התאמה והאזנה', emoji: '🎧', blurb: 'זוגות ושמיעה', max: () => 10 },
-  { kind: 'spell', title: 'כתיבה', emoji: '✍️', blurb: 'איות והקלדה', max: (lang) => (lang === 'en' ? 6 : 10) },
+  { kind: 'spell', title: 'כתיבה', emoji: '✍️', blurb: 'איות והקלדה', max: (lang) => (lang === 'ar' ? 10 : 6) },
 ]
 
 /** The four practice levels; the mock test (level 5) is separate and always available. */
@@ -105,9 +105,7 @@ export function generatePrepLesson(kind: PrepKind, words: Word[], pool: Word[], 
 
     case 'spell': {
       const shuffled = shuffle(words, rng)
-      if (opts.lang === 'en') {
-        for (const word of shuffled) if (canScramble(word.target)) out.push({ kind: 'scramble', word })
-      }
+      for (const word of shuffled) if (canScramble(word.target, opts.lang)) out.push({ kind: 'scramble', word })
       for (const word of shuffled) {
         out.push(canType(word.target, opts.lang) ? { kind: 'type', word } : mc(word, 'toTarget'))
       }

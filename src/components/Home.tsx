@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { allLessons, courses, langInfo, LEVELS_PER_UNIT, unitLevels } from '../data/courses'
+import { allLessons, courses, langInfo, LANGS, LEVELS_PER_UNIT, unitLevels } from '../data/courses'
 import type { Progress } from '../store/progress'
 import type { Lang } from '../types'
 import { Mascot } from './Mascot'
@@ -37,13 +37,16 @@ export function Home({ progress, onLang, onSound, onStart }: Props) {
   return (
     <div className="screen home">
       <header className="home-top">
-        <div className="langs">
-          {(Object.keys(langInfo) as Lang[]).map((l) => (
-            <button key={l} className={`pill ${l === progress.lang ? 'active' : ''}`} onClick={() => onLang(l)}>
-              {langInfo[l].flag} {langInfo[l].native}
-            </button>
-          ))}
-        </div>
+        <label className="lang-select">
+          <span className="sr-only">שפת הלימוד</span>
+          <select value={progress.lang} onChange={(e) => onLang(e.target.value as Lang)} aria-label="שפת הלימוד">
+            {LANGS.map((l) => (
+              <option key={l} value={l}>
+                {langInfo[l].flag} {langInfo[l].native}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="scores">
           <span className="chip-stat flame" title="רצף ימים">
             🔥 {progress.streak}

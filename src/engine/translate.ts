@@ -1,7 +1,7 @@
 import type { Lang } from '../types'
 
 /**
- * English/Arabic → Hebrew translation for test-prep word lists, called straight from the browser.
+ * English/Arabic/Bulgarian → Hebrew translation for test-prep word lists, called straight from the browser.
  *
  * Primary: Google's public web translate endpoint (unofficial, but free, CORS-enabled and accurate,
  * with alternative meanings). Fallback: MyMemory (official free API, less accurate).

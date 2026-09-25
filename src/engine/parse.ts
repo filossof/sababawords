@@ -1,8 +1,19 @@
 import type { Lang, Word } from '../types'
 import { normalize } from './check'
 
+/** kept here (not imported from the course data) so parsing stays independent of the course content */
+const LANG_NAME: Record<Lang, string> = { en: 'אנגלית', ar: 'ערבית', bg: 'בולגרית' }
+
 const HEBREW = /[֐-׿]/
 const ARABIC = /[؀-ۿ]/
+const CYRILLIC = /[\u0400-\u04FF]/
+
+/** Does this text look like it is written in `lang`? */
+function looksLike(text: string, lang: Lang): boolean {
+  if (lang === 'en') return /[a-z]/i.test(text)
+  if (lang === 'bg') return CYRILLIC.test(text)
+  return ARABIC.test(text)
+}
 
 export interface SkippedLine {
   line: number
@@ -54,8 +65,7 @@ export function parseVocab(text: string, lang: Lang): ParseResult {
     if (leftHe === rightHe) return skip(leftHe ? 'שני הצדדים בעברית' : 'לא נמצא תרגום בעברית')
     const [he, target] = leftHe ? [left, right] : [right, left]
 
-    if (lang === 'en' && !/[a-z]/i.test(target)) return skip('המילה אינה באנגלית')
-    if (lang === 'ar' && !ARABIC.test(target)) return skip('המילה אינה בערבית')
+    if (!looksLike(target, lang)) return skip(`המילה אינה ב${LANG_NAME[lang]}`)
 
     const id = wordId(target, lang)
     if (seen.has(id)) return skip('מילה כפולה')
@@ -91,9 +101,8 @@ export function parseWordList(text: string, lang: Lang): WordListResult {
 
   const add = (target: string, he: string | undefined, line: number, raw: string) => {
     const skip = (reason: string) => skipped.push({ line, text: raw, reason })
-    if (lang === 'en' && !/[a-z]/i.test(target)) return skip('המילה אינה באנגלית')
-    if (lang === 'ar' && !ARABIC.test(target)) return skip('המילה אינה בערבית')
-    if (HEBREW.test(target)) return skip('המילה צריכה להיות באנגלית')
+    if (!looksLike(target, lang)) return skip(`המילה אינה ב${LANG_NAME[lang]}`)
+    if (HEBREW.test(target)) return skip(`המילה צריכה להיות ב${LANG_NAME[lang]}`)
     const id = wordId(target, lang)
     if (seen.has(id)) return skip('מילה כפולה')
     seen.add(id)

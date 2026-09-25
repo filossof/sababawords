@@ -1,3 +1,4 @@
+import { LANGS } from '../data/courses'
 import type { Lang } from '../types'
 
 export interface SharedDeck {
@@ -45,7 +46,7 @@ export async function decodeDeck(code: string): Promise<SharedDeck | null> {
     const d = JSON.parse(new TextDecoder().decode(bytes)) as SharedDeck
     const ok =
       typeof d.name === 'string' &&
-      (d.lang === 'en' || d.lang === 'ar') &&
+      LANGS.includes(d.lang) &&
       Array.isArray(d.words) &&
       d.words.every((w) => Array.isArray(w) && typeof w[0] === 'string' && typeof w[1] === 'string')
     return ok ? d : null
