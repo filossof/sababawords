@@ -6,10 +6,11 @@ plus a **test-prep** feature: enter a language + vocabulary list → generated l
 ## Architecture
 - Static PWA: Vite + React + TypeScript, `vite-plugin-pwa` (installable, offline).
 - Hosting: GitHub Pages (`gh-pages` branch). No backend; progress in localStorage/IndexedDB per device.
-- Audio: Web Speech API. The voice list loads late (or stays empty) on Android, so it is re-read on
-  voiceschanged, on timers and on the first tap; with no list at all the app speaks anyway, and listening
-  exercises are only hidden when the device lists voices but none for that language. Settings has a real
-  speak test, per-device install instructions and a manual on/off override.
+- Audio: Web Speech API. A device's voice *list* is not what it can *say* – phones often speak a language
+  that never appears in getVoices() – so audio is optimistic: speaker buttons and listening exercises are
+  offered until a speech attempt actually fails, and that failure is remembered per language
+  (`sababawords:tts-failed`) and cleared by a successful test. A listening exercise that stays silent reveals
+  its text so it is still answerable. Settings: real speak test, per-device install help, auto/on/off override.
 - UI is Hebrew/RTL; English exercises LTR, Arabic RTL – handle mixed direction.
 
 ## Core game

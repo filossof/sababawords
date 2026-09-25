@@ -18,10 +18,14 @@ interface Props extends ExerciseProps {
 
 export function MultipleChoice({ word, options, mode, audio, blind, lang, showTranslit, onDone }: Props) {
   const [picked, setPicked] = useState<string | null>(null)
+  // if the device cannot actually speak, show the word so the question stays answerable
+  const [silent, setSilent] = useState(false)
   const pickTarget = mode === 'toTarget'
 
   useEffect(() => {
-    if (mode === 'listen') speak(word.target, lang)
+    if (mode !== 'listen') return
+    setSilent(false)
+    void speak(word.target, lang).then((r) => setSilent(r !== 'spoken'))
   }, [mode, word.target, lang])
 
   function pick(id: string) {
@@ -37,7 +41,16 @@ export function MultipleChoice({ word, options, mode, audio, blind, lang, showTr
     <div className="exercise">
       <h2 className="title">{title}</h2>
       <div className="prompt">
-        {mode === 'listen' && <Speaker text={word.target} lang={lang} big />}
+        {mode === 'listen' && (
+          <>
+            <Speaker text={word.target} lang={lang} big />
+            {silent && (
+              <Txt lang={lang} className="big-word">
+                {word.target}
+              </Txt>
+            )}
+          </>
+        )}
         {mode === 'toHe' && (
           <>
             <Txt lang={lang} className={word.sentence ? 'sentence' : 'big-word'}>

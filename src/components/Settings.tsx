@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { speak, useVoiceList, useVoiceStatus, type Listening } from '../audio'
+import { audioAvailable, forgetSpeechFailures, speak, useVoiceList, useVoiceStatus, type Listening } from '../audio'
 import { langInfo, LANGS } from '../data/courses'
 import { testSound } from '../sound'
 import type { Progress } from '../store/progress'
@@ -20,8 +20,8 @@ interface Props {
 const SAMPLE: Record<Lang, string> = { en: 'white, wait, weight', ar: 'مرحبا، كيف حالك؟', bg: 'Здравей, как си?' }
 
 const RESULT: Record<string, string> = {
-  spoken: '✓ נשמע? מצוין – ההקראה עובדת.',
-  failed: 'הדפדפן לא הצליח להקריא. נסו שוב, ואם זה חוזר – התקינו קול לשפה הזאת בהגדרות המכשיר.',
+  spoken: '✓ ההקראה עובדת – תרגילי ההאזנה יופיעו בשיעורים.',
+  failed: 'המכשיר לא הצליח להקריא. תרגילי ההאזנה יוסתרו – התקינו קול לשפה הזאת ונסו שוב.',
   unsupported: 'הדפדפן הזה לא תומך בהקראה.',
 }
 
@@ -29,6 +29,15 @@ function VoicePicker({ lang, value, onVoice }: { lang: Lang; value: string; onVo
   const voices = useVoiceList(lang)
   const status = useVoiceStatus(lang)
   const [result, setResult] = useState('')
+  const [ok, setOk] = useState(() => audioAvailable(lang))
+
+  const test = () => {
+    forgetSpeechFailures() // give the device a fresh chance
+    void speak(SAMPLE[lang], lang).then((r) => {
+      setResult(RESULT[r])
+      setOk(r === 'spoken')
+    })
+  }
 
   return (
     <div className="setting-row">
@@ -47,17 +56,17 @@ function VoicePicker({ lang, value, onVoice }: { lang: Lang; value: string; onVo
           </select>
         ) : (
           <span className="muted">
-            {status === 'unknown'
-              ? 'המכשיר עדיין לא דיווח על הקולות שלו – ההקראה כנראה תעבוד בכל זאת.'
-              : `לא נמצא במכשיר קול ל${langInfo[lang].he}. אפשר לנסות בכל זאת:`}
+            {ok
+              ? `המכשיר לא מפרסם קול ל${langInfo[lang].he}, אבל הוא בדרך כלל מקריא בכל זאת – בדקו:`
+              : `ההקראה ב${langInfo[lang].he} לא עבדה כאן. נסו שוב אחרי שתתקינו קול:`}
           </span>
         )}
-        <button className="btn btn-ghost small" onClick={() => void speak(SAMPLE[lang], lang).then((r) => setResult(RESULT[r]))}>
+        <button className="btn btn-ghost small" onClick={test}>
           ▶ נסו
         </button>
       </div>
       {result && <div className="muted">{result}</div>}
-      {status === 'missing' && (
+      {(!ok || status === 'missing') && (
         <details className="help">
           <summary>לא מצליח? איך מוסיפים קול במכשיר</summary>
           <ul>

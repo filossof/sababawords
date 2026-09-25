@@ -18,6 +18,42 @@ export function setVoicePreferences(p: Partial<Record<Lang, string>>): void {
   preferred = p
 }
 
+/* ------------------------------------------------------------------ *
+ * What a device *lists* and what it can *say* are different things:
+ * phones (Android especially) often speak a language that never shows
+ * up in getVoices(). So audio stays on until speaking actually fails.
+ * ------------------------------------------------------------------ */
+const FAILED_KEY = 'sababawords:tts-failed:v1'
+let failed: Partial<Record<Lang, boolean>> = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(FAILED_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+})()
+
+function rememberSpeech(lang: Lang, worked: boolean) {
+  if (!!failed[lang] === !worked) return
+  failed = { ...failed, [lang]: !worked }
+  try {
+    localStorage.setItem(FAILED_KEY, JSON.stringify(failed))
+  } catch {
+    /* best effort */
+  }
+  notify()
+}
+
+/** Forgets what we learned about speech failures (used when the user asks to test again). */
+export function forgetSpeechFailures(): void {
+  failed = {}
+  try {
+    localStorage.removeItem(FAILED_KEY)
+  } catch {
+    /* best effort */
+  }
+  notify()
+}
+
 /** 'auto' follows what the device reports; the others force listening exercises on or off. */
 export type Listening = 'auto' | 'on' | 'off'
 let listening: Listening = 'auto'
@@ -120,13 +156,19 @@ export function useVoiceStatus(lang: Lang): VoiceState {
   return useVoiceSnapshot(() => voiceState(lang), [lang])
 }
 
-/** Whether to offer listening exercises and speaker buttons for this language. */
+/**
+ * Whether to offer listening exercises and speaker buttons for this language.
+ * Optimistic on purpose: only a speech attempt that actually failed turns audio off.
+ */
 export function useVoice(lang: Lang): boolean {
-  return useVoiceSnapshot(() => {
-    if (listening === 'on') return true
-    if (listening === 'off') return false
-    return voiceState(lang) !== 'missing'
-  }, [lang])
+  return useVoiceSnapshot(() => audioAvailable(lang), [lang])
+}
+
+export function audioAvailable(lang: Lang): boolean {
+  if (typeof speechSynthesis === 'undefined') return false
+  if (listening === 'on') return true
+  if (listening === 'off') return false
+  return !failed[lang]
 }
 
 /** Re-renders when the device finishes loading its voice list. */
@@ -158,6 +200,7 @@ export function speak(text: string, lang: Lang): Promise<'spoken' | 'failed' | '
     const done = (result: 'spoken' | 'failed') => {
       if (settled) return
       settled = true
+      rememberSpeech(lang, result === 'spoken')
       resolve(result)
     }
     u.addEventListener('start', () => done('spoken'))

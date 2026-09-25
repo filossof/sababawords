@@ -23,8 +23,12 @@ export function WordBank({ word, dir, tokens, audio, lang, onDone }: Props) {
   const rtl = dirOf(answerLang) === 'rtl'
   const built = useMemo(() => placed.map((i) => tokens[i]).join(' '), [placed, tokens])
 
+  // if the device cannot actually speak, show the sentence so the question stays answerable
+  const [silent, setSilent] = useState(false)
   useEffect(() => {
-    if (dir === 'listen') speak(word.target, lang)
+    if (dir !== 'listen') return
+    setSilent(false)
+    void speak(word.target, lang).then((r) => setSilent(r !== 'spoken'))
   }, [dir, word.target, lang])
 
   function check() {
@@ -40,7 +44,16 @@ export function WordBank({ word, dir, tokens, audio, lang, onDone }: Props) {
     <div className="exercise">
       <h2 className="title">{title}</h2>
       <div className="sentence-prompt">
-        {dir === 'listen' && <Speaker text={word.target} lang={lang} big />}
+        {dir === 'listen' && (
+          <>
+            <Speaker text={word.target} lang={lang} big />
+            {silent && (
+              <Txt lang={lang} className="sentence">
+                {word.target}
+              </Txt>
+            )}
+          </>
+        )}
         {dir === 'toHe' && (
           <>
             {audio && <Speaker text={word.target} lang={lang} />}
