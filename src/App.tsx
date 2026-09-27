@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { setListening, setVoicePreferences, useVoice } from './audio'
+import { setSpeakingMode, useSpeaking } from './speech'
 import { DeckEditor } from './components/DeckEditor'
 import { DeckHome } from './components/DeckHome'
 import { DeckList } from './components/DeckList'
@@ -27,17 +28,19 @@ type View =
   | { name: 'mock'; deckId: string; questions: Exercise[] }
 
 export default function App() {
-  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, setListeningMode, earnXp, resetLearning } = useProgress()
+  const { progress, setLang, setShowTranslit, setSoundOn, setVoice, setListeningMode, setSpeakingSetting, earnXp, resetLearning } = useProgress()
   const store = useDecks()
   const [view, setView] = useState<View>({ name: 'learn' })
   const [session, setSession] = useState<{ def: PlaySession; exercises: Exercise[]; attempt: number } | null>(null)
   const [incoming, setIncoming] = useState<Deck | null>(null)
   const audio = useVoice(progress.lang)
+  const speaking = useSpeaking(progress.lang)
 
   useEffect(installClickSounds, [])
   useEffect(() => setSoundEnabled(progress.soundOn), [progress.soundOn])
   useEffect(() => setVoicePreferences(progress.voices), [progress.voices])
   useEffect(() => setListening(progress.listening), [progress.listening])
+  useEffect(() => setSpeakingMode(progress.speaking), [progress.speaking])
 
   // a shared deck arrives as a link like …/sababawords/#deck=<code>
   useEffect(() => {
@@ -58,7 +61,7 @@ export default function App() {
     play({
       lang: progress.lang,
       theme: { color: lesson.unit.color, emoji: lesson.unit.emoji },
-      make: () => generateLevel(lesson, { lang: progress.lang, audio }),
+      make: () => generateLevel(lesson, { lang: progress.lang, audio, speaking }),
       onComplete: (xp, accuracy) => earnXp(xp, lesson.id, accuracy),
     })
   }
@@ -89,6 +92,17 @@ export default function App() {
       lang: deck.lang,
       make: () => generatePrepLesson('weak', words, deck.words, { lang: deck.lang, audio }),
       onComplete: (xp, accuracy, missed) => finishDeckLesson(deck, null, words.map((w) => w.id), missed, accuracy, xp),
+    })
+  }
+
+  /** a "say it out loud" lesson built from the deck's own words */
+  function pronounce(deck: Deck) {
+    play({
+      lang: deck.lang,
+      theme: PREP_THEME,
+      make: () => generatePrepLesson('pronounce', deck.words.slice(0, 10), deck.words, { lang: deck.lang, audio }),
+      onComplete: (xp, accuracy, missed) =>
+        finishDeckLesson(deck, null, deck.words.slice(0, 10).map((w) => w.id), missed, accuracy, xp),
     })
   }
 
@@ -176,6 +190,7 @@ export default function App() {
           onVoice={setVoice}
           onTranslit={setShowTranslit}
           onListening={setListeningMode}
+          onSpeaking={setSpeakingSetting}
           onResetLearning={resetLearning}
           onResetEverything={() => {
             resetLearning()
@@ -218,6 +233,7 @@ export default function App() {
           onReset={() => store.resetDeck(deck.id)}
           onStartLesson={(lesson) => startPrepLesson(deck, lesson)}
           onPractice={(ids) => practiceWords(deck, ids)}
+          onPronounce={() => pronounce(deck)}
           onMock={() =>
             setView({ name: 'mock', deckId: deck.id, questions: generateMock(deck.words, deck.words, deck.lang) })
           }

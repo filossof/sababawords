@@ -44,7 +44,15 @@ src/store/       progress + decks
 Every unit has 8 levels (`src/data/courses.ts`): 3 word intros, a review, 2 sentence intros, sentence practice, a challenge.
 `src/engine/level.ts` builds each level with 9–10 exercises; a level never shows more than 12 questions (retries fit inside that).
 Exercise types: flashcard, multiple choice (both directions, with pictures), picture choice, matching, listening,
-sentence word-bank (translate both ways, or hear-and-build), letter tiles, typing.
+sentence word-bank (translate both ways, or hear-and-build), letter tiles, typing, speaking.
+
+## Speaking exercises
+`src/speech.ts` wraps SpeechRecognition (Chrome/Safari; not Firefox) and, like the speech side, only turns the
+feature off once an attempt really failed (`sababawords:asr-failed`). `matchesSpoken` in `engine/check.ts` scores
+the browser's guesses leniently (edit distance, or most words of a sentence) because recognition misreads kids.
+One speaking question is added to the review, sentence-practice and challenge levels when a microphone is usable,
+and a deck can be drilled with the "🎤 תרגול הגייה" button. "Can't speak now" skips without costing a heart and
+stops asking for the rest of the lesson; skipped questions are left out of the accuracy score.
 Test-prep lessons are also kept to 8–12 questions (`chunkEven` + padding/trimming); only the mock test is longer.
 
 ## Writing is introduced gradually

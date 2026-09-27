@@ -5,7 +5,7 @@ import { MAX_QUESTIONS } from './level'
 
 export const MIN_QUESTIONS = 8
 
-export type PrepKind = 'meet' | 'recognize' | 'match' | 'spell' | 'weak'
+export type PrepKind = 'meet' | 'recognize' | 'match' | 'spell' | 'weak' | 'pronounce'
 
 export interface PrepLesson {
   id: string
@@ -111,6 +111,11 @@ export function generatePrepLesson(kind: PrepKind, words: Word[], pool: Word[], 
       }
       break
     }
+
+    case 'pronounce':
+      // one "say it out loud" per word, plus recognition questions if that is all we have room for
+      for (const word of shuffle(words, rng)) out.push({ kind: 'speak', word })
+      return fit(out)
 
     case 'weak':
       for (const word of words) {

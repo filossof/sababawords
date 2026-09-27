@@ -9,6 +9,8 @@ export interface LevelContext {
   lang: Lang
   /** listening exercises only exist when the device has a voice for the language */
   audio: boolean
+  /** speaking exercises only exist when the browser can listen through the microphone */
+  speaking?: boolean
   rng?: Rng
 }
 
@@ -73,6 +75,11 @@ export function generateLevel(def: LessonDef, ctx: LevelContext): Exercise[] {
     return fallback(w)
   }
   const match = (ws: Word[]): Exercise => ({ kind: 'match', pairs: shuffle(ws, rng) })
+  /** a speaking exercise, or the given fallback when the browser cannot listen */
+  const say = (w: Word, fallback: (w: Word) => Exercise): Exercise =>
+    ctx.speaking ? { kind: 'speak', word: w } : fallback(w)
+  /** an extra "say it out loud" question – only when the browser can listen, so levels keep their size */
+  const sayExtra = (w: Word): Exercise[] => (ctx.speaking ? [{ kind: 'speak', word: w }] : [])
 
   switch (def.kind) {
     case 'meet': {
@@ -96,6 +103,7 @@ export function generateLevel(def: LessonDef, ctx: LevelContext): Exercise[] {
         writing(ws[5], how, mcTo),
         writing(ws[6], how, pic),
         writing(ws[7], how, mcHe),
+        ...sayExtra(ws[8]),
       ]
     }
 
@@ -120,7 +128,7 @@ export function generateLevel(def: LessonDef, ctx: LevelContext): Exercise[] {
         bank(ss[3], 'listen'),
         bank(ss[3], 'toHe'),
         bank(ss[4], 'toHe'),
-        bank(ss[5], 'toHe'),
+        say(ss[5], (x) => bank(x, 'toHe')),
       ]
     }
 
@@ -139,6 +147,7 @@ export function generateLevel(def: LessonDef, ctx: LevelContext): Exercise[] {
         bank(ss[3], 'toTarget'),
         writing(ws[4], how, mcTo),
         writing(ws[5], how, pic),
+        ...sayExtra(ws[6]),
       ]
     }
   }

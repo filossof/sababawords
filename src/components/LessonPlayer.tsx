@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useVoice } from '../audio'
+import { useSpeaking } from '../speech'
 import { MAX_QUESTIONS } from '../engine/level'
 import { answerOf } from '../engine/generate'
 import { sfx } from '../sound'
@@ -9,6 +10,7 @@ import { Flashcard } from './Flashcard'
 import { MatchPairs } from './MatchPairs'
 import { Mascot } from './Mascot'
 import { MultipleChoice } from './MultipleChoice'
+import { Pronounce } from './Pronounce'
 import { PictureChoice } from './PictureChoice'
 import { ScrambleWord } from './ScrambleWord'
 import { TypeAnswer } from './TypeAnswer'
@@ -39,6 +41,7 @@ export const starsFor = (accuracy: number) => (accuracy >= 90 ? 3 : accuracy >= 
 
 export function LessonPlayer({ lang, exercises, showTranslit, theme, onExit, onRetry, onComplete }: Props) {
   const audio = useVoice(lang)
+  const canSpeak = useSpeaking(lang)
   const [queue, setQueue] = useState<Exercise[]>(exercises)
   const [idx, setIdx] = useState(0)
   const [hearts, setHearts] = useState(MAX_HEARTS)
@@ -47,9 +50,23 @@ export function LessonPlayer({ lang, exercises, showTranslit, theme, onExit, onR
   const [feedback, setFeedback] = useState<{ correct: boolean; line: string } | null>(null)
   const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing')
   const [streak, setStreak] = useState(0)
+  /** questions the learner waved off (speaking without a mic, say) – they do not count against them */
+  const [skipped, setSkipped] = useState(0)
+  const [askSpeaking, setAskSpeaking] = useState(true)
 
   const scored = exercises.filter((e) => e.kind !== 'flashcard').length
-  const ex = queue[idx]
+  const raw = queue[idx]
+  // if speaking was waved off (or the browser cannot listen), those questions are simply skipped
+  const ex = raw.kind === 'speak' && !(askSpeaking && canSpeak) ? null : raw
+
+  // a speaking question we cannot ask moves on by itself
+  useEffect(() => {
+    if (ex === null) {
+      setSkipped((n) => n + 1)
+      advance(hearts)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ex, idx])
 
   function advance(nextHearts: number) {
     setFeedback(null)
@@ -60,6 +77,7 @@ export function LessonPlayer({ lang, exercises, showTranslit, theme, onExit, onR
 
   function resolve(correct: boolean) {
     let nextHearts = hearts
+    if (!ex) return
     if (!correct) {
       nextHearts = hearts - 1
       setHearts(nextHearts)
@@ -99,7 +117,8 @@ export function LessonPlayer({ lang, exercises, showTranslit, theme, onExit, onR
   const themeStyle = { '--unit': theme.color } as CSSProperties
 
   if (status !== 'playing') {
-    const accuracy = Math.max(0, Math.round((100 * (scored - mistakes)) / Math.max(scored, 1)))
+    const asked = Math.max(scored - skipped, 1)
+    const accuracy = Math.max(0, Math.round((100 * (asked - mistakes)) / asked))
     const xp = status === 'won' ? 10 + (mistakes === 0 ? 5 : 0) : 0
     const stars = starsFor(accuracy)
     return (
@@ -142,6 +161,8 @@ export function LessonPlayer({ lang, exercises, showTranslit, theme, onExit, onR
     )
   }
 
+  if (!ex) return null // a speaking question we cannot ask – the effect above moves on
+
   const answer = feedback && !feedback.correct ? answerOf(ex) : null
   const props = { lang, showTranslit, onDone: resolve }
   const total = Math.max(queue.length, 1)
@@ -183,6 +204,18 @@ export function LessonPlayer({ lang, exercises, showTranslit, theme, onExit, onR
         {ex.kind === 'bank' && <WordBank {...props} word={ex.word} dir={ex.dir} tokens={ex.tokens} audio={audio} />}
         {ex.kind === 'match' && <MatchPairs {...props} pairs={ex.pairs} />}
         {ex.kind === 'scramble' && <ScrambleWord {...props} word={ex.word} />}
+        {ex.kind === 'speak' && (
+          <Pronounce
+            {...props}
+            word={ex.word}
+            audio={audio}
+            onSkip={() => {
+              setSkipped((n) => n + 1)
+              setAskSpeaking(false) // stop asking for the rest of this lesson
+              advance(hearts)
+            }}
+          />
+        )}
         {ex.kind === 'type' && <TypeAnswer {...props} word={ex.word} />}
       </main>
 

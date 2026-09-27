@@ -44,3 +44,54 @@ export function sameSentence(a: string, b: string, lang: Lang | 'he'): boolean {
     (lang === 'he' ? t : normalize(t, lang)).replace(/[.,!?؟،:;"]/g, '').replace(/\s+/g, ' ').trim()
   return strip(a) === strip(b)
 }
+
+/** Edit distance between two strings (how many single-character changes turn one into the other). */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i]
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+    }
+    prev = row
+  }
+  return prev[b.length]
+}
+
+/** 0-1: how close two texts are, ignoring case, punctuation and (for Arabic) diacritics. */
+export function similarity(a: string, b: string, lang: Lang): number {
+  const [x, y] = [normalize(a, lang), normalize(b, lang)]
+  if (!x || !y) return 0
+  if (x === y) return 1
+  return 1 - editDistance(x, y) / Math.max(x.length, y.length)
+}
+
+/**
+ * Was the word/sentence pronounced well enough? Speech recognition is approximate and kids'
+ * voices are harder for it, so we accept the best of its guesses and allow a small slip:
+ * a near-match on a short word, or most of the words of a sentence.
+ */
+export function matchesSpoken(
+  heard: string[],
+  expected: string,
+  lang: Lang,
+): { ok: boolean; best: string; score: number } {
+  const target = normalize(expected, lang)
+  const words = target.split(' ').filter(Boolean)
+  let best = ''
+  let score = 0
+  for (const candidate of heard) {
+    const direct = similarity(candidate, expected, lang)
+    // a sentence counts if most of its words are in there, even when the rest is misheard
+    const said = normalize(candidate, lang)
+    const covered = words.length > 1 ? words.filter((w) => said.includes(w)).length / words.length : 0
+    const value = Math.max(direct, covered)
+    if (value > score) {
+      score = value
+      best = candidate
+    }
+  }
+  const threshold = words.length > 1 ? 0.7 : target.length <= 4 ? 0.75 : 0.8
+  return { ok: score >= threshold, best: best || (heard[0] ?? ""), score }
+}

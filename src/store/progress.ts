@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Listening } from '../audio'
+import type { SpeakingMode } from '../speech'
 import type { Lang } from '../types'
 
 export interface Progress {
@@ -13,6 +14,8 @@ export interface Progress {
   soundOn: boolean
   /** listening exercises: follow the device, or force them on/off */
   listening: Listening
+  /** speaking exercises: follow the device, or force them on/off */
+  speaking: SpeakingMode
   /** chosen text-to-speech voice per language (by name); missing = automatic */
   voices: Partial<Record<Lang, string>>
 }
@@ -28,6 +31,7 @@ const initial: Progress = {
   showTranslit: true,
   soundOn: true,
   listening: 'auto',
+  speaking: 'auto',
   voices: {},
 }
 
@@ -64,6 +68,7 @@ export function useProgress() {
         showTranslit: p.showTranslit,
         soundOn: p.soundOn,
         listening: p.listening,
+        speaking: p.speaking,
         voices: p.voices,
       })),
     [],
@@ -80,6 +85,8 @@ export function useProgress() {
       setProgress((p) => ({ ...p, voices: { ...p.voices, [lang]: name || undefined } })),
     [],
   )
+
+  const setSpeakingSetting = useCallback((speaking: SpeakingMode) => setProgress((p) => ({ ...p, speaking })), [])
 
   const setListeningMode = useCallback((listening: Listening) => setProgress((p) => ({ ...p, listening })), [])
 
@@ -100,5 +107,5 @@ export function useProgress() {
     })
   }, [])
 
-  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, setListeningMode, earnXp, resetLearning }
+  return { progress, setLang, setShowTranslit, setSoundOn, setVoice, setListeningMode, setSpeakingSetting, earnXp, resetLearning }
 }

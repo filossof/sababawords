@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSpeaking } from '../speech'
 import { langInfo } from '../data/courses'
 import { masteredCount, weakWordIds } from '../engine/mastery'
 import { buildLevels, type PrepLesson } from '../engine/testprep'
@@ -15,14 +16,16 @@ interface Props {
   onReset: () => void
   onStartLesson: (lesson: PrepLesson) => void
   onPractice: (wordIds: string[]) => void
+  onPronounce: () => void
   onMock: () => void
 }
 
-export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onReset, onStartLesson, onPractice, onMock }: Props) {
+export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onReset, onStartLesson, onPractice, onPronounce, onMock }: Props) {
   const levels = useMemo(() => buildLevels(deck.words, deck.lang), [deck.words, deck.lang])
   const ids = useMemo(() => deck.words.map((w) => w.id), [deck.words])
   const weak = weakWordIds(ids, progress.stats)
   const mastered = masteredCount(ids, progress.stats)
+  const canSpeak = useSpeaking(deck.lang)
   const [shareMsg, setShareMsg] = useState('')
   const [manualLink, setManualLink] = useState('')
 
@@ -83,6 +86,11 @@ export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onReset, on
         {weak.length > 0 && (
           <button className="btn btn-blue" onClick={() => onPractice(weak)}>
             💪 תרגול מילים חלשות ({weak.length})
+          </button>
+        )}
+        {canSpeak && (
+          <button className="btn btn-blue" onClick={onPronounce}>
+            🎤 תרגול הגייה
           </button>
         )}
         <button className="btn btn-ghost small" onClick={() => void share()}>

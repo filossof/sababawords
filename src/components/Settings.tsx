@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { audioAvailable, forgetSpeechFailures, speak, useVoiceList, useVoiceStatus, type Listening } from '../audio'
+import { forgetSpeechFailures as forgetMicFailures, listen, recognitionSupported, speakingBlockedBy, type SpeakingMode } from '../speech'
 import { langInfo, LANGS } from '../data/courses'
 import { testSound } from '../sound'
 import type { Progress } from '../store/progress'
@@ -14,6 +15,7 @@ interface Props {
   onSound: (on: boolean) => void
   onVoice: (lang: Lang, name: string) => void
   onListening: (mode: Listening) => void
+  onSpeaking: (mode: SpeakingMode) => void
   onTranslit: (v: boolean) => void
 }
 
@@ -85,7 +87,47 @@ function VoicePicker({ lang, value, onVoice }: { lang: Lang; value: string; onVo
   )
 }
 
-export function Settings({ progress, deckCount, onSound, onVoice, onTranslit, onListening, onResetLearning, onResetEverything }: Props) {
+function MicCheck({ lang }: { lang: Lang }) {
+  const [state, setState] = useState<'idle' | 'listening' | 'done'>('idle')
+  const [message, setMessage] = useState('')
+
+  if (!recognitionSupported())
+    return <div className="muted">הדפדפן הזה לא תומך בזיהוי דיבור. ב-Chrome ובספארי זה עובד.</div>
+
+  const run = () => {
+    forgetMicFailures() // give the microphone a fresh chance
+    setMessage('')
+    setState('listening')
+    const s = listen(lang)
+    setTimeout(s.stop, 4000)
+    void s.result.then((r) => {
+      setState('done')
+      setMessage(
+        r.alternatives.length
+          ? `✓ שמענו: "${r.alternatives[0]}" – תרגילי הדיבור יעבדו.`
+          : r.error === 'not-allowed'
+            ? 'אין גישה למיקרופון. אשרו את ההרשאה בדפדפן ונסו שוב.'
+            : r.error === 'network'
+              ? 'הזיהוי דורש חיבור לאינטרנט.'
+              : 'לא שמענו כלום. נסו שוב ודברו קרוב למכשיר.',
+      )
+    })
+  }
+
+  return (
+    <div className="setting-row">
+      <button className="btn btn-ghost small" onClick={run} disabled={state === 'listening'}>
+        {state === 'listening' ? '🎤 מקשיבים… דברו' : '🎤 בדיקת מיקרופון'}
+      </button>
+      {message && <span className="muted">{message}</span>}
+      {speakingBlockedBy(lang) === 'blocked' && !message && (
+        <span className="muted">זיהוי הדיבור נכשל כאן בפעם הקודמת – אפשר לבדוק שוב.</span>
+      )}
+    </div>
+  )
+}
+
+export function Settings({ progress, deckCount, onSound, onVoice, onTranslit, onListening, onSpeaking, onResetLearning, onResetEverything }: Props) {
   const [soundCheck, setSoundCheck] = useState('')
   const [done, setDone] = useState('')
 
@@ -142,6 +184,22 @@ export function Settings({ progress, deckCount, onSound, onVoice, onTranslit, on
             <option value="off">לא להציג</option>
           </select>
           <span className="muted">אם יש הקראה במכשיר אבל תרגילי ההאזנה לא מופיעים, בחרו "תמיד להציג".</span>
+        </div>
+      </section>
+
+      <section className="settings-card">
+        <h2>🎤 תרגילי דיבור</h2>
+        <MicCheck lang={progress.lang} />
+        <div className="setting-row">
+          <label className="setting-label" htmlFor="speaking">
+            תרגילי הגייה
+          </label>
+          <select id="speaking" value={progress.speaking} onChange={(e) => onSpeaking(e.target.value as SpeakingMode)}>
+            <option value="auto">אוטומטי – כשהדפדפן תומך</option>
+            <option value="on">תמיד להציג</option>
+            <option value="off">לא להציג</option>
+          </select>
+          <span className="muted">בתרגילים האלה אומרים את המילה בקול, והדפדפן בודק את ההגייה.</span>
         </div>
       </section>
 

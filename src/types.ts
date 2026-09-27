@@ -57,5 +57,7 @@ export type Exercise =
   | { kind: 'match'; pairs: Word[] }
   | { kind: 'type'; word: Word }
   | { kind: 'scramble'; word: Word }
+  /** say the word or sentence out loud; the browser listens and checks */
+  | { kind: 'speak'; word: Word }
   /** build a sentence from word tiles; `word` is the sentence. listen = hear it, then build it */
   | { kind: 'bank'; word: Word; dir: 'toTarget' | 'toHe' | 'listen'; tokens: string[] }
