@@ -3,6 +3,7 @@ import { allLessons, courses, langInfo, LANGS, LEVELS_PER_UNIT, unitLevels } fro
 import type { Progress } from '../store/progress'
 import type { Lang } from '../types'
 import { Mascot } from './Mascot'
+import { useScrollToCurrent } from './useScrollToCurrent'
 import { starsFor } from './LessonPlayer'
 
 interface Props {
@@ -33,6 +34,7 @@ export function Home({ progress, onLang, onSound, onStart }: Props) {
   const course = courses[progress.lang]
   const order = allLessons(course).map((l) => l.id)
   const firstOpen = order.find((id) => !(id in progress.completed))
+  const currentRef = useScrollToCurrent<HTMLDivElement>(firstOpen)
 
   return (
     <div className="screen home">
@@ -112,7 +114,12 @@ export function Home({ progress, onLang, onSound, onStart }: Props) {
                 const stars = isDone ? starsFor(progress.completed[lesson.id]) : 0
                 const cx = TRAIL_WIDTH / 2 + TRAIL_OFFSETS[i]
                 return (
-                  <div key={lesson.id} className="trail-step" style={{ left: cx - 38, top: 40 + i * STEP - 38 }}>
+                  <div
+                    key={lesson.id}
+                    ref={current ? currentRef : undefined}
+                    className="trail-step"
+                    style={{ left: cx - 38, top: 40 + i * STEP - 38 }}
+                  >
                     {current && (
                       <>
                         <div className="start-bubble">התחילו!</div>

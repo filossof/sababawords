@@ -31,15 +31,20 @@ function picOptions(word: Word, pool: Word[], rng: Rng): Word[] {
   return shuffle([word, ...out], rng)
 }
 
+/** A sentence's full stop or question mark would point straight at the last tile, so tiles carry no punctuation. */
+const tile = (t: string) => t.replace(/^[.,!?;:"'«»؟،]+|[.,!?;:"'«»؟،]+$/g, '')
+
+export const tokensOf = (text: string): string[] => text.split(/\s+/).map(tile).filter(Boolean)
+
 /** Answer tokens plus a couple of wrong tokens taken from the unit's other sentences. */
 function bankTokens(sentence: Word, dir: 'toTarget' | 'toHe' | 'listen', pool: Word[], rng: Rng): string[] {
   const text = (s: Word) => (dir === 'toHe' ? s.he : s.target)
-  const answer = text(sentence).split(/\s+/)
+  const answer = tokensOf(text(sentence))
   const have = new Set(answer)
   const extras = [
     ...new Set(
       shuffle(
-        pool.filter((s) => s.id !== sentence.id).flatMap((s) => text(s).split(/\s+/)),
+        pool.filter((s) => s.id !== sentence.id).flatMap((s) => tokensOf(text(s))),
         rng,
       ).filter((t) => !have.has(t)),
     ),

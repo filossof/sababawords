@@ -6,6 +6,7 @@ import { buildLevels, type PrepLesson } from '../engine/testprep'
 import { shareUrl } from '../store/share'
 import type { Deck, DeckProgress } from '../store/decks'
 import { Countdown } from './Countdown'
+import { useScrollToCurrent } from './useScrollToCurrent'
 
 interface Props {
   deck: Deck
@@ -31,6 +32,7 @@ export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onReset, on
 
   const lessons = levels.flatMap((l) => l.lessons)
   const firstOpen = lessons.find((l) => !(l.id in progress.completed))?.id
+  const currentRef = useScrollToCurrent<HTMLButtonElement>(firstOpen)
 
   async function share() {
     const url = await shareUrl({
@@ -131,6 +133,7 @@ export function DeckHome({ deck, progress, onBack, onEdit, onDelete, onReset, on
               return (
                 <button
                   key={lesson.id}
+                  ref={current ? currentRef : undefined}
                   className={`node ${done ? 'done' : ''} ${current ? 'current' : ''} ${locked ? 'locked' : ''}`}
                   style={{ marginInlineStart: `${[0, 44, 16][i % 3]}px` }}
                   disabled={locked}
